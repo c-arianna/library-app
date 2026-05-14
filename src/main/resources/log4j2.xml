@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Configuration>
+<Configuration>
+
+	<Properties>
+		<Property name="rootpath">logs</Property>
+	</Properties>
+
+	<Appenders>
+		<RollingFile name="appAppender"
+			fileName="${rootpath}/app/library.log"
+			filePattern="${rootpath}/app/library-%d{yyyy-MM-dd}.log"
+			append="true">
+			<PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} %t %-5p - %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" modulate="true" />
+			</Policies>
+			<DefaultRolloverStrategy max="1000" />
+		</RollingFile>
+
+		<RollingFile name="springbootAppender"
+			fileName="${rootpath}/springboot/springboot.log"
+			filePattern="${rootpath}/springboot/springboot-%d{yyyy-MM-dd}.log"
+			append="true">
+			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" modulate="true" />
+			</Policies>
+			<DefaultRolloverStrategy max="1000" />
+		</RollingFile>
+
+		<RollingFile name="internalApplicationAppender"
+			fileName="${rootpath}/tomcat/outTomcat.log"
+			filePattern="${rootpath}/application/application-%d{yyyy-MM-dd}.log"
+			append="true">
+			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" modulate="true" />
+			</Policies>
+			<DefaultRolloverStrategy max="1000" />
+		</RollingFile>
+
+		<Console name="STDOUT" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
+		</Console>
+	</Appenders>
+
+	<Loggers>
+		<Logger name="libraryApp" level="debug">
+			<AppenderRef ref="appAppender" />
+		</Logger>
+
+		<Logger name="org.springframework.boot" level="info" additivity="false">
+			<AppenderRef ref="springbootAppender" />
+		</Logger>
+
+		<Root level="info">
+			<AppenderRef ref="STDOUT" />
+			<AppenderRef ref="internalApplicationAppender" />
+		</Root>
+	</Loggers>
+
+</Configuration>
