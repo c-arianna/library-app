@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 
 import mentoring.acomi.library.application.eventhandler.EventDispatcher;
 import mentoring.acomi.library.application.repositories.EventRepository;
-import mentoring.acomi.library.domain.books.ISBN;
 import mentoring.acomi.library.domain.events.BookRegistered;
+import mentoring.acomi.library.domain.model.books.ISBN;
 
 @Service
 public class AggregateFactory {

@@ -1,11 +1,9 @@
-package mentoring.acomi.library.domain.books;
+package mentoring.acomi.library.domain.model.books;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
 
-@Getter
 @EqualsAndHashCode
 @ToString
 @Builder
@@ -25,6 +23,22 @@ public class Book {
     
     public static Book create(String isbn, String author, String title, String description)   {
     	return new Book(ISBN.of(isbn), new Author(author), new Title(title), new Description(description));
+    }
+    
+    public String getIsbn() {
+    	return isbn!= null ? isbn.getValue() : "";
+    }
+    
+    public String getAuthor() {
+    	return author!= null ? author.getValue(): "";
+    }
+    
+    public String getTitle() {
+    	return title!=null ? title.getValue(): "";
+    }
+    
+    public String getDescription() {
+    	return description!=null ? description.getValue() : "";
     }
 }
 

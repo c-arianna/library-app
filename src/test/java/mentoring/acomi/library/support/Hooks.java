@@ -1,4 +1,4 @@
-package mentoring.acomi.library;
+package mentoring.acomi.library.support;
 
 import io.cucumber.java.AfterAll;
 import io.cucumber.java.BeforeAll;

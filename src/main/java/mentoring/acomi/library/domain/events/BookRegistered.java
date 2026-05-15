@@ -3,7 +3,7 @@ package mentoring.acomi.library.domain.events;
 import java.time.Instant;
 
 import lombok.Getter;
-import mentoring.acomi.library.domain.books.Book;
+import mentoring.acomi.library.domain.model.books.Book;
 
 @Getter
 public class BookRegistered  {

@@ -1,4 +1,4 @@
-package mentoring.acomi.library.domain.books;
+package mentoring.acomi.library.domain.model.books;
 
 import mentoring.acomi.library.domain.common.ValueObject;
 

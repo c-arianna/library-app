@@ -48,7 +48,7 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
       And la risposta contiene il campo "message"
       
      Scenario: Aggiunta di un libro già presente nel catalogo
-      Given aggiungo un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
+      Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
         """
         Il barone rampante (1957) è il secondo libro della trilogia I nostri antenati
         """
@@ -64,3 +64,62 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
       And la risposta contiene il campo "code"
       And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      
+  Rule: Consultazione del catalogo libri
+
+    Scenario: Consultazione del catalogo vuoto
+      When l'utente visualizza il catalogo dei libri
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "books"
+      And "books" è una lista vuota
+      
+    Scenario: Consultazione del catalogo con libri presenti
+      Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
+        """
+        Il barone rampante (1957) è il secondo libro della trilogia I nostri antenati
+        """
+      And l'amministratore aggiunge un libro con isbn "978-8804776369", autore "Italo Calvino", titolo "Il visconte dimezzato" e descrizione
+        """
+
+        """
+      When l'utente visualizza il catalogo dei libri
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "books"
+      And "books" contiene 2 elementi
+      And "books" ha un elemento con i campi:                                                         
+        | isbn        | "9788804336327"                                                                 |
+        | author      | "Italo Calvino"                                                                 |
+        | title       | "Il barone rampante"                                                            |
+        | description | "Il barone rampante (1957) è il secondo libro della trilogia I nostri antenati" |
+      And "books" ha un elemento con i campi:
+        | isbn        | "9788804776369"         |
+        | author      | "Italo Calvino"         |
+        | title       | "Il visconte dimezzato" |
+        | description | EMPTY                   |
+        
+    Scenario: Consultazione del catalogo filtrata per autore non presente
+      Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
+        """
+        Il barone rampante (1957) è il secondo libro della trilogia I nostri antenati
+        """
+      When l'utente visualizza il catalogo dei libri, con filtro di ricerca
+        | author | "Shakespeare" |
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "books"
+      And "books" è una lista vuota
+      
+    Scenario: Consultazione del catalogo filtrata per autore presente
+      Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
+        """
+        Il barone rampante (1957) è il secondo libro della trilogia I nostri antenati
+        """
+      When l'utente visualizza il catalogo dei libri, con filtro di ricerca
+        | author | Italo Calvino |
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "books"
+      And "books" contiene 1 elementi
+      And "books" ha un elemento con i campi:
+        | isbn        | "9788804336327"                                                                 |
+        | author      | "Italo Calvino"                                                                 |
+        | title       | "Il barone rampante"                                                            |
+        | description | "Il barone rampante (1957) è il secondo libro della trilogia I nostri antenati" |

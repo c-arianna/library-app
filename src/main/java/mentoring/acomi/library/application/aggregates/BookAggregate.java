@@ -4,10 +4,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
 
-import mentoring.acomi.library.domain.books.Book;
-import mentoring.acomi.library.domain.books.ISBN;
 import mentoring.acomi.library.domain.books.errors.InvalidIsbn;
 import mentoring.acomi.library.domain.events.BookRegistered;
+import mentoring.acomi.library.domain.model.books.Book;
+import mentoring.acomi.library.domain.model.books.ISBN;
 
 public class BookAggregate {
 
@@ -36,12 +36,12 @@ public class BookAggregate {
 
 	public void register(Book book) throws InvalidIsbn {
 
-		if (!book.getIsbn().getValue().equals(isbn.getValue())) {
+		if (!book.getIsbn().equals(isbn.getValue())) {
 			throw new InvalidIsbn("Book ISBN does not match aggregate id");
 		}
 
 		if (!isRegistered) {
-			BookRegistered event = new BookRegistered(BookAggregate.aggregateType, book.getIsbn().getValue(),
+			BookRegistered event = new BookRegistered(BookAggregate.aggregateType, book.getIsbn(),
 					book, Instant.now());
 			apply(event);
 			dispatcher.accept(event);

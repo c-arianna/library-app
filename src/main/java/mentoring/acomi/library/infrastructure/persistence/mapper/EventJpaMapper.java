@@ -5,8 +5,8 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 import mentoring.acomi.library.application.aggregates.BookAggregate;
-import mentoring.acomi.library.domain.books.Book;
 import mentoring.acomi.library.domain.events.BookRegistered;
+import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.infrastructure.persistence.entity.EventEntity;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
