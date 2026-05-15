@@ -9,14 +9,13 @@ import mentoring.acomi.library.application.BookFilter;
 import mentoring.acomi.library.application.aggregates.AggregateFactory;
 import mentoring.acomi.library.application.aggregates.BookAggregate;
 import mentoring.acomi.library.application.errors.ApplicationConflictError;
-import mentoring.acomi.library.application.errors.ValidationError;
 import mentoring.acomi.library.application.repositories.BookViewRepository;
 import mentoring.acomi.library.application.repositories.EventRepository;
 import mentoring.acomi.library.application.view.BookView;
-import mentoring.acomi.library.domain.common.errors.ValidationDomainError;
 import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
-import mentoring.acomi.library.infrastructure.dto.books.AddBookResponse;
+import mentoring.acomi.library.infrastructure.dto.books.BookResponse;
+import mentoring.acomi.library.infrastructure.dto.books.AddCopyBookRequest;
 import mentoring.acomi.library.infrastructure.dto.books.BookDto;
 import mentoring.acomi.library.infrastructure.dto.books.BooksResponse;
 
@@ -35,7 +34,7 @@ public class BookService {
 	}
 
 	@Transactional
-	public AddBookResponse addBook(AddBookRequest request) {
+	public BookResponse addBook(AddBookRequest request) {
 
 		String isbn = request.isbn();
 
@@ -43,14 +42,10 @@ public class BookService {
 			throw new ApplicationConflictError("BOOK_ALREADY_EXISTS", String.format("ISBN: %s", isbn));
 		}
 
-		try {
-			BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, request.isbn());
-			Book book = getBook(request);
-			aggregate.register(book);
-			return new AddBookResponse(book.getIsbn().formatted());
-		} catch (ValidationDomainError e) {
-			throw new ValidationError(e.getCode(), e.getMessage());
-		}
+		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, request.isbn());
+		Book book = getBook(request);
+		aggregate.register(book);
+		return new BookResponse(book.getIsbn().formatted());
 
 	}
 
@@ -59,14 +54,23 @@ public class BookService {
 		return toBooksResponse(books);
 	}
 
+	@Transactional
+	public BookResponse addBookCopy(AddCopyBookRequest request) {
+
+		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, request.isbn());
+		aggregate.addCopy(request.quantity());
+
+		return new BookResponse(request.isbn());
+	}
+
 	private Book getBook(AddBookRequest request) {
 		return Book.create(request.isbn(), request.author(), request.title(), request.description());
 	}
 
 	private BooksResponse toBooksResponse(List<BookView> books) {
 
-		List<BookDto> bookResponse = books.stream().map(b -> new BookDto(b.getIsbn(),
-				b.getAuthor(), b.getTitle(), b.getDescription(), b.getAvailableCopies() > 0)).toList();
+		List<BookDto> bookResponse = books.stream().map(b -> new BookDto(b.getIsbn(), b.getAuthor(), b.getTitle(),
+				b.getDescription(), b.getAvailableCopies() > 0)).toList();
 
 		return new BooksResponse(bookResponse);
 	}

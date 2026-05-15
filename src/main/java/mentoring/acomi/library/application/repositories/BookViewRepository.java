@@ -9,4 +9,5 @@ import mentoring.acomi.library.domain.model.books.Book;
 public interface BookViewRepository {
 	  public void addBook(Book book);
 	  public List<BookView> find(BookFilter filter);
+	  public void addCopies(String isbn, int quantity);
 }

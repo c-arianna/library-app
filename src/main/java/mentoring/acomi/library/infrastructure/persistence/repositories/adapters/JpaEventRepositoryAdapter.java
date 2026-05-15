@@ -7,7 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import mentoring.acomi.library.application.repositories.EventRepository;
-import mentoring.acomi.library.domain.events.BookRegistered;
+import mentoring.acomi.library.domain.events.books.BookEvent;
 import mentoring.acomi.library.infrastructure.persistence.entity.EventEntity;
 import mentoring.acomi.library.infrastructure.persistence.mapper.EventJpaMapper;
 import mentoring.acomi.library.infrastructure.persistence.repositories.EventJpaRepository;
@@ -24,9 +24,9 @@ public class JpaEventRepositoryAdapter implements EventRepository {
 	}
 
 	@Override
-	public void appendToStream(BookRegistered event) {
+	public void appendToStream(BookEvent event) {
 
-		Optional<Integer> version = repository.findLastVersion(event.getAggregateId(), event.getAggregateType());
+		Optional<Integer> version = repository.findLastVersion(event.aggregateType(), event.aggregateId());
 
 		Integer nextVersion = version.isEmpty() ? 0 : version.get() + 1;
 
@@ -37,7 +37,7 @@ public class JpaEventRepositoryAdapter implements EventRepository {
 	}
 
 	@Override
-	public List<BookRegistered> loadStream(String aggregateType, String aggregateId) {
+	public List<BookEvent> loadStream(String aggregateType, String aggregateId) {
 		return repository.findEventsForAggregate(aggregateType, aggregateId).stream().map(mapper::toDomain).toList();
 	}
 
@@ -47,7 +47,7 @@ public class JpaEventRepositoryAdapter implements EventRepository {
 	}
 
 	@Override
-	public List<BookRegistered> loadAll() {
+	public List<BookEvent> loadAll() {
 		return repository.findAll(Sort.by("eventVersion")).stream().map(mapper::toDomain).toList();
 	}
 

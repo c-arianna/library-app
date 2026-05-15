@@ -37,4 +37,9 @@ public class JpaBookViewRepositoryAdapter implements BookViewRepository {
 		return repository.findAll(spec).stream().map(mapper::toView).toList();
 	}
 
+	@Override
+	public void addCopies(String isbn, int quantity) {
+		repository.addCopies(isbn, quantity);		
+	}
+
 }

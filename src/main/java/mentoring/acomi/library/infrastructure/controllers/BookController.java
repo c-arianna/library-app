@@ -11,7 +11,8 @@ import jakarta.validation.Valid;
 import mentoring.acomi.library.application.BookFilter;
 import mentoring.acomi.library.application.services.BookService;
 import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
-import mentoring.acomi.library.infrastructure.dto.books.AddBookResponse;
+import mentoring.acomi.library.infrastructure.dto.books.BookResponse;
+import mentoring.acomi.library.infrastructure.dto.books.AddCopyBookRequest;
 import mentoring.acomi.library.infrastructure.dto.books.BooksResponse;
 
 @RestController
@@ -25,7 +26,7 @@ public class BookController {
 	}
 	
 	@PostMapping
-	public AddBookResponse addBook(@RequestBody @Valid AddBookRequest request) {
+	public BookResponse addBook(@RequestBody @Valid AddBookRequest request) {
 		return service.addBook(request);
 	}
 	
@@ -35,5 +36,10 @@ public class BookController {
 		    @RequestParam(required = false) boolean onlyAvailable){
 		BookFilter filter = new BookFilter(title, author, isbn, onlyAvailable);
 		return service.findBooks(filter);
+	}
+	
+	@PostMapping("/add/bookcopy")
+	public BookResponse addBookCopy(@RequestBody AddCopyBookRequest request) {
+		return service.addBookCopy(request);
 	}
 }

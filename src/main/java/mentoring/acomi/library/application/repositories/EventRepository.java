@@ -2,12 +2,12 @@ package mentoring.acomi.library.application.repositories;
 
 import java.util.List;
 
-import mentoring.acomi.library.domain.events.BookRegistered;
+import mentoring.acomi.library.domain.events.books.BookEvent;
 
 public interface EventRepository {
-	public void appendToStream(BookRegistered event);
-	public List<BookRegistered> loadStream(String aggregateType, String aggregateId);
+	public void appendToStream(BookEvent event);
+	public List<BookEvent> loadStream(String aggregateType, String aggregateId);
 	public boolean exists(String aggregateType, String aggregateId);
-	public List<BookRegistered> loadAll();
+	public List<BookEvent> loadAll();
 	public boolean existsEvent(String eventType, String aggregateId);
 }

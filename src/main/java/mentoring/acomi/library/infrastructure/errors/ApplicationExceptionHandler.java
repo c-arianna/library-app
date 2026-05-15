@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import mentoring.acomi.library.application.errors.ApplicationConflictError;
-import mentoring.acomi.library.application.errors.ValidationError;
+import mentoring.acomi.library.domain.books.errors.BookNotRegisteredError;
+import mentoring.acomi.library.domain.books.errors.InvalidQuantityError;
+import mentoring.acomi.library.domain.common.errors.ValidationDomainError;
 import mentoring.acomi.library.infrastructure.errors.dto.ErrorResponse;
 
 @RestControllerAdvice
@@ -26,7 +28,7 @@ public class ApplicationExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ErrorResponse handleFieldValidation(MethodArgumentNotValidException e) throws Exception {
+	public ErrorResponse handleValidationErorr(MethodArgumentNotValidException e) throws Exception {
 
 		FieldError fieldError = e.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
 		String message = fieldError != null ? fieldError.getDefaultMessage() : "Dati di input non validi";
@@ -35,21 +37,30 @@ public class ApplicationExceptionHandler {
 
 	}
 
-	@ExceptionHandler(ValidationError.class)
+	@ExceptionHandler(ValidationDomainError.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ErrorResponse handleValidationError(ValidationError e)
+	public ErrorResponse handleValidationDomainError(ValidationDomainError e)
 			throws Exception {
 
-		return handleException(e, e.getCode(), e.getMessage(), e.getType());
-
+		return handleException(e, e.getCode(), e.getMessage(), "VALIDATION_ERROR");
 	}
 	
 	@ExceptionHandler(ApplicationConflictError.class)
 	@ResponseStatus(HttpStatus.CONFLICT)
 	public ErrorResponse handleConflictError(ApplicationConflictError e) throws Exception {
-
 		return handleException(e, e.getCode(), e.getMessage(), e.getType());
-
+	}
+		
+	@ExceptionHandler(InvalidQuantityError.class)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+	public ErrorResponse handleInvalidQuantityError(InvalidQuantityError e) throws Exception {
+		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
+	}
+	
+	@ExceptionHandler(BookNotRegisteredError.class)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+	public ErrorResponse handleBookNotRegisteredError(BookNotRegisteredError e) throws Exception {
+		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
 	}
 	
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

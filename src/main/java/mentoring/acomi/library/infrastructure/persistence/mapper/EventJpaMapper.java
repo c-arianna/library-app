@@ -4,9 +4,12 @@ import java.time.Instant;
 
 import org.springframework.stereotype.Component;
 
-import mentoring.acomi.library.application.aggregates.BookAggregate;
-import mentoring.acomi.library.domain.events.BookRegistered;
-import mentoring.acomi.library.domain.model.books.Book;
+import mentoring.acomi.library.domain.events.DomainEventType;
+import mentoring.acomi.library.domain.events.books.BookCopyAddedEvent;
+import mentoring.acomi.library.domain.events.books.BookCopyAddedPayload;
+import mentoring.acomi.library.domain.events.books.BookEvent;
+import mentoring.acomi.library.domain.events.books.BookRegisteredEvent;
+import mentoring.acomi.library.domain.events.books.BookRegisteredPayload;
 import mentoring.acomi.library.infrastructure.persistence.entity.EventEntity;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -20,24 +23,42 @@ public class EventJpaMapper {
 		this.objectMapper = objectMapper;
 	}
 
-	public BookRegistered toDomain(EventEntity event) {
+	public BookEvent toDomain(EventEntity event) {
 
-		return new BookRegistered(BookAggregate.aggregateType, event.getAggregateId(), fromJsonNode(event.getPayload()), event.getOccurredAt());
+		DomainEventType eventType = DomainEventType.valueOf(event.getEventType());
+
+		return getEvent(eventType, event);
 	}
 
-	public EventEntity toEntity(BookRegistered book) {
+	private BookEvent getEvent(DomainEventType eventType, EventEntity event) {
 
-		return new EventEntity(book.getAggregateType(), book.getAggregateId(), book.getType(),
-				toJsonNode(book.getPayload()), Instant.now());
+		return switch (eventType) {
+
+			case BookRegistered -> {
+	
+				BookRegisteredPayload payload = objectMapper.treeToValue(event.getPayload(), BookRegisteredPayload.class);
+				yield new BookRegisteredEvent(event.getAggregateType(), event.getAggregateId(), payload,
+						event.getOccurredAt());
+			}
+
+			case BookCopyAdded -> {
+				BookCopyAddedPayload payload = objectMapper.treeToValue(event.getPayload(), BookCopyAddedPayload.class);
+				yield new BookCopyAddedEvent(event.getAggregateType(), event.getAggregateId(), payload,
+						event.getOccurredAt());
+			}
+
+		};
+
+	}
+
+	public EventEntity toEntity(BookEvent event) {
+		return new EventEntity(event.aggregateType(), event.aggregateId(), event.type().name(),
+				toJsonNode(event.payload()), Instant.now());
 
 	}
 
 	private JsonNode toJsonNode(Object payload) {
 		return objectMapper.valueToTree(payload);
-	}
-
-	private Book fromJsonNode(JsonNode node) {
-		return objectMapper.treeToValue(node, Book.class);
 	}
 
 }

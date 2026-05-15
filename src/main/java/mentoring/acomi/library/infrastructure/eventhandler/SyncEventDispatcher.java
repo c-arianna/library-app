@@ -12,12 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import mentoring.acomi.library.application.eventhandler.EventDispatcher;
-import mentoring.acomi.library.domain.events.BookRegistered;
+import mentoring.acomi.library.domain.events.DomainEventType;
+import mentoring.acomi.library.domain.events.books.BookEvent;
 
 @Component
 public class SyncEventDispatcher implements EventDispatcher {
 
-	private Map<String, List<Consumer<BookRegistered>>> subscribers = new ConcurrentHashMap<>();
+	private Map<DomainEventType, List<Consumer<BookEvent>>> subscribers = new ConcurrentHashMap<>();
 
 	private final Logger logger;
 
@@ -26,22 +27,22 @@ public class SyncEventDispatcher implements EventDispatcher {
 	}
 	
 	@Override
-	public void dispatch(BookRegistered event) {
+	public void dispatch(BookEvent event) {
 		
-		List<Consumer<BookRegistered>> callbacks = subscribers.getOrDefault(event.getType(), List.of());
+		List<Consumer<BookEvent>> callbacks = subscribers.getOrDefault(event.type(), List.of());
 		
-		for(Consumer<BookRegistered> callback : callbacks) {
+		for(Consumer<BookEvent> callback : callbacks) {
 			try {
 				callback.accept(event);
 			}catch(Exception e){
-				logger.error("[EventDispatcher] Subscriber failed, eventType={}", event.getType(), e);
+				logger.error("[EventDispatcher] Subscriber failed, eventType={}", event.type(), e);
 			}
 		}
 		
 	}
 
 	@Override
-	public void subscribe(String eventType, Consumer<BookRegistered> callback) {
+	public void subscribe(DomainEventType eventType, Consumer<BookEvent> callback) {
 		subscribers.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(callback);	
 	}
 

@@ -44,6 +44,10 @@ public class BookSteps {
 
 	private RestTestClient client;
 
+	/* 
+	 *  ############################### GIVEN #####################################
+	 */
+	
 	@Given("l'amministratore aggiunge un libro con isbn {string}, autore {string}, titolo {string} e descrizione")
 	public void addBook(String isbn, String author, String title, DocString description) {
 
@@ -54,6 +58,10 @@ public class BookSteps {
 		service.addBook(request);
 	}
 
+	/* 
+	 *  ############################### WHEN #####################################
+	 */
+	
 	@When("l'amministratore aggiunge un libro al catalogo con i seguenti dati:")
 	public void createBook(DocString body) {
 
@@ -98,6 +106,24 @@ public class BookSteps {
 		world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
 	}
 
+	@When("l'amministratore aggiunge una copia del libro, con i seguenti dati:")
+	public void addBokCopy(DocString body) {
+
+		String url = new StringBuilder().append(TestConstants.API_URL).append(port).toString();
+		client = RestTestClient.bindToServer().baseUrl(url).build();
+
+		var result = client.post().uri("/books/add/bookcopy").contentType(MediaType.APPLICATION_JSON).body(body.getContent())
+				.exchange().expectBody().returnResult();
+
+		world.lastStatus = result.getStatus().value();
+		world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
+
+	}
+	
+	/* 
+	 *  ############################### THEN #####################################
+	 */
+	
 	@Then("la risposta ha status code {int}")
 	public void checkResponseStatusCode(int status) {
 		Assertions.assertEquals(status, this.world.lastStatus);
@@ -112,7 +138,7 @@ public class BookSteps {
 
 	@Then("è stato generato l'evento {string} con aggregateId {string}")
 	public void checkEvent(String eventType, String aggregateId) {
-		eventRepository.existsEvent(eventType, aggregateId);
+		Assertions.assertTrue(eventRepository.existsEvent(eventType, aggregateId));
 	}
 
 	@Then("{string} è una lista vuota")

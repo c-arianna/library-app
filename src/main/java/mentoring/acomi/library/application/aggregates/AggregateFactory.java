@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import mentoring.acomi.library.application.eventhandler.EventDispatcher;
 import mentoring.acomi.library.application.repositories.EventRepository;
-import mentoring.acomi.library.domain.events.BookRegistered;
+import mentoring.acomi.library.domain.events.books.BookEvent;
 import mentoring.acomi.library.domain.model.books.ISBN;
 
 @Service
@@ -29,7 +29,7 @@ public class AggregateFactory {
 
 	public BookAggregate load(String aggregateType, String aggregateId)  {
 
-		Consumer<BookRegistered> dispatch = event -> {
+		Consumer<BookEvent> dispatch = event -> {
 			eventRepository.appendToStream(event);
 			try {
 				eventDispatcher.dispatch(event);
@@ -38,7 +38,7 @@ public class AggregateFactory {
 			}
 		};
 
-		List<BookRegistered> events = eventRepository.loadStream(aggregateType, aggregateId);
+		List<BookEvent> events = eventRepository.loadStream(aggregateType, aggregateId);
 
 		return new BookAggregate(ISBN.of(aggregateId), dispatch, events);
 	

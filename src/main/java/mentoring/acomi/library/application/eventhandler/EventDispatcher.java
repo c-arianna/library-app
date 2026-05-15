@@ -1,9 +1,11 @@
 package mentoring.acomi.library.application.eventhandler;
 
 import java.util.function.Consumer;
-import mentoring.acomi.library.domain.events.BookRegistered;
+
+import mentoring.acomi.library.domain.events.DomainEventType;
+import mentoring.acomi.library.domain.events.books.BookEvent;
 
 public interface EventDispatcher {
-	public void dispatch(BookRegistered event);
-	public void subscribe(String eventType, Consumer<BookRegistered> callback);
+	public void dispatch(BookEvent event);
+	public void subscribe(DomainEventType eventType, Consumer<BookEvent> callback);
 }
