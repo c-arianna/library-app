@@ -42,4 +42,9 @@ public class JpaBookViewRepositoryAdapter implements BookViewRepository {
 		repository.addCopies(isbn, quantity);		
 	}
 
+	@Override
+	public void removeCopies(String isbn, int quantity) {
+		repository.removeCopies(isbn, quantity);		
+	}
+
 }

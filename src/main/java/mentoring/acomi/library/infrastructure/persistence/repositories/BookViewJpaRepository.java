@@ -10,16 +10,32 @@ import org.springframework.stereotype.Repository;
 import mentoring.acomi.library.infrastructure.persistence.entity.BookViewEntity;
 
 @Repository
-public interface BookViewJpaRepository extends JpaRepository<BookViewEntity, String>, JpaSpecificationExecutor<BookViewEntity> {
+public interface BookViewJpaRepository
+		extends JpaRepository<BookViewEntity, String>, JpaSpecificationExecutor<BookViewEntity> {
+
+	@Modifying
+	@Query("""
+				UPDATE BookViewEntity b
+				SET b.totalCopies = b.totalCopies + :quantity,
+				    b.availableCopies = b.availableCopies + :quantity,
+				    b.updatedAt = CURRENT_TIMESTAMP
+				WHERE b.isbn = :isbn
+			""")
+	void addCopies(@Param("isbn") String isbn, @Param("quantity") int quantity);
 
 	@Modifying
 	@Query("""
 			    UPDATE BookViewEntity b
-			    SET b.totalCopies = b.totalCopies + :quantity,
-			        b.availableCopies = b.availableCopies + :quantity,
+			    SET b.totalCopies = b.totalCopies - :quantity,
+			        b.availableCopies = 
+			            CASE 
+			                WHEN (b.availableCopies - :quantity) < 0 
+			                THEN 0 
+			                ELSE (b.availableCopies - :quantity)
+			            END,
 			        b.updatedAt = CURRENT_TIMESTAMP
 			    WHERE b.isbn = :isbn
 			""")
-	void addCopies(@Param("isbn") String isbn, @Param("quantity") int quantity);
+	void removeCopies(@Param("isbn") String isbn, @Param("quantity") int quantity);
 
 }

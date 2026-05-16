@@ -4,7 +4,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import mentoring.acomi.library.application.repositories.BookViewRepository;
-import mentoring.acomi.library.domain.events.books.BookCopyAddedEvent;
+import mentoring.acomi.library.domain.events.books.BookCopiesAddedEvent;
+import mentoring.acomi.library.domain.events.books.BookCopiesRemovedEvent;
 import mentoring.acomi.library.domain.events.books.BookEvent;
 import mentoring.acomi.library.domain.events.books.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.books.BookRegisteredPayload;
@@ -24,7 +25,8 @@ public class BookProjection {
 
 		switch (event) {
 			case BookRegisteredEvent e -> repository.addBook(getBook(e.payload()));
-			case BookCopyAddedEvent e -> repository.addCopies(e.payload().getIsbn(), e.payload().getQuantity());
+			case BookCopiesAddedEvent e -> repository.addCopies(e.payload().isbn(), e.payload().quantity());
+			case BookCopiesRemovedEvent e -> repository.removeCopies(e.payload().isbn(), e.payload().quantity());
 		}
 
 	}

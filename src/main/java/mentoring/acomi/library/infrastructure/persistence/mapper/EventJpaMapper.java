@@ -5,8 +5,10 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 import mentoring.acomi.library.domain.events.DomainEventType;
-import mentoring.acomi.library.domain.events.books.BookCopyAddedEvent;
-import mentoring.acomi.library.domain.events.books.BookCopyAddedPayload;
+import mentoring.acomi.library.domain.events.books.BookCopiesAddedEvent;
+import mentoring.acomi.library.domain.events.books.BookCopiesAddedPayload;
+import mentoring.acomi.library.domain.events.books.BookCopiesRemovedEvent;
+import mentoring.acomi.library.domain.events.books.BookCopiesRemovedPayload;
 import mentoring.acomi.library.domain.events.books.BookEvent;
 import mentoring.acomi.library.domain.events.books.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.books.BookRegisteredPayload;
@@ -41,9 +43,15 @@ public class EventJpaMapper {
 						event.getOccurredAt());
 			}
 
-			case BookCopyAdded -> {
-				BookCopyAddedPayload payload = objectMapper.treeToValue(event.getPayload(), BookCopyAddedPayload.class);
-				yield new BookCopyAddedEvent(event.getAggregateType(), event.getAggregateId(), payload,
+			case BookCopiesAdded -> {
+				BookCopiesAddedPayload payload = objectMapper.treeToValue(event.getPayload(), BookCopiesAddedPayload.class);
+				yield new BookCopiesAddedEvent(event.getAggregateType(), event.getAggregateId(), payload,
+						event.getOccurredAt());
+			}
+			
+			case BookCopiesRemoved -> {
+				BookCopiesRemovedPayload payload = objectMapper.treeToValue(event.getPayload(), BookCopiesRemovedPayload.class);
+				yield new BookCopiesRemovedEvent(event.getAggregateType(), event.getAggregateId(), payload,
 						event.getOccurredAt());
 			}
 

@@ -15,9 +15,10 @@ import mentoring.acomi.library.application.view.BookView;
 import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
 import mentoring.acomi.library.infrastructure.dto.books.BookResponse;
-import mentoring.acomi.library.infrastructure.dto.books.AddCopyBookRequest;
+import mentoring.acomi.library.infrastructure.dto.books.AddBookCopiesRequest;
 import mentoring.acomi.library.infrastructure.dto.books.BookDto;
 import mentoring.acomi.library.infrastructure.dto.books.BooksResponse;
+import mentoring.acomi.library.infrastructure.dto.books.RemoveBookCopiesRequest;
 
 @Service
 public class BookService {
@@ -55,14 +56,17 @@ public class BookService {
 	}
 
 	@Transactional
-	public BookResponse addBookCopy(AddCopyBookRequest request) {
-
-		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, request.isbn());
-		aggregate.addCopy(request.quantity());
-
-		return new BookResponse(request.isbn());
+	public void addBookCopies(AddBookCopiesRequest request, String isbn) {
+		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, isbn);
+		aggregate.addCopies(request.quantity());
 	}
 
+	@Transactional
+	public void removeBookCopies(RemoveBookCopiesRequest request, String isbn) {
+		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, isbn);
+		aggregate.removeCopies(request.quantity(), request.reason());
+	}
+	
 	private Book getBook(AddBookRequest request) {
 		return Book.create(request.isbn(), request.author(), request.title(), request.description());
 	}

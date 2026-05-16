@@ -11,7 +11,8 @@ public class ApplicationEventConfiguration {
 
 	public ApplicationEventConfiguration(EventDispatcher eventDispatcher, BookProjector bookProjector) {
 		eventDispatcher.subscribe(DomainEventType.BookRegistered, bookProjector::project);
-		eventDispatcher.subscribe(DomainEventType.BookCopyAdded, bookProjector::project);
+		eventDispatcher.subscribe(DomainEventType.BookCopiesAdded, bookProjector::project);
+		eventDispatcher.subscribe(DomainEventType.BookCopiesRemoved, bookProjector::project);
 	}
 
 }

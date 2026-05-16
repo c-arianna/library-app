@@ -4,11 +4,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
 
-import mentoring.acomi.library.domain.books.errors.BookNotRegisteredError;
+import mentoring.acomi.library.domain.books.errors.BookNotRegistered;
+import mentoring.acomi.library.domain.books.errors.CannotRemoveBookCopies;
 import mentoring.acomi.library.domain.books.errors.InvalidIsbn;
-import mentoring.acomi.library.domain.books.errors.InvalidQuantityError;
-import mentoring.acomi.library.domain.events.books.BookCopyAddedEvent;
-import mentoring.acomi.library.domain.events.books.BookCopyAddedPayload;
+import mentoring.acomi.library.domain.books.errors.InvalidQuantity;
+import mentoring.acomi.library.domain.events.books.BookCopiesAddedEvent;
+import mentoring.acomi.library.domain.events.books.BookCopiesAddedPayload;
+import mentoring.acomi.library.domain.events.books.BookCopiesRemovedEvent;
+import mentoring.acomi.library.domain.events.books.BookCopiesRemovedPayload;
 import mentoring.acomi.library.domain.events.books.BookEvent;
 import mentoring.acomi.library.domain.events.books.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.books.BookRegisteredPayload;
@@ -21,7 +24,9 @@ public class BookAggregate {
 
 	private boolean isRegistered = false;
 	private int totalCopies = 0;
-
+	private int borrowed = 0;
+	private int reserved = 0;
+	
 	private ISBN isbn;
 	private Consumer<BookEvent> dispatcher;
 
@@ -39,20 +44,24 @@ public class BookAggregate {
 
 	private void apply(BookEvent event) {
 		switch (event) {
-		case BookRegisteredEvent e -> applyBookEventRegistered(e);
-		case BookCopyAddedEvent e -> applyBookCopyAddedEvent(e);
+			case BookRegisteredEvent e -> applyBookEventRegistered(e);
+			case BookCopiesAddedEvent e -> applyBookCopiesAdded(e);
+			case BookCopiesRemovedEvent e -> applyBookCopiesRemoved(e);
 		}
-
 	}
 
 	private void applyBookEventRegistered(BookRegisteredEvent event) {
 		isRegistered = true;
 	}
 
-	private void applyBookCopyAddedEvent(BookCopyAddedEvent event) {
-		totalCopies += event.payload().getQuantity();
+	private void applyBookCopiesAdded(BookCopiesAddedEvent event) {
+		totalCopies += event.payload().quantity();
 	}
 
+	private void applyBookCopiesRemoved(BookCopiesRemovedEvent event) {
+		totalCopies -= event.payload().quantity();
+	}
+	
 	public void register(Book book) {
 
 		if (!book.getIsbn().equals(isbn.getValue())) {
@@ -60,27 +69,47 @@ public class BookAggregate {
 		}
 
 		if (!isRegistered) {
-			BookRegisteredPayload payload = new BookRegisteredPayload(book.getIsbn(), book.getAuthor(),
-					book.getTitle(), book.getDescription());
-			BookRegisteredEvent event = new BookRegisteredEvent(BookAggregate.aggregateType, book.getIsbn(), 
-					payload, Instant.now());
+			BookRegisteredPayload payload = new BookRegisteredPayload(book.getIsbn(), book.getAuthor(), book.getTitle(),
+					book.getDescription());
+			BookRegisteredEvent event = new BookRegisteredEvent(BookAggregate.aggregateType, book.getIsbn(), payload,
+					Instant.now());
 			manageEvent(event);
 		}
 
 	}
 
-	public void addCopy(int quantity) {
+	public void addCopies(int quantity) {
 
 		ensureRegistered();
 
 		if (quantity <= 0) {
-			throw new InvalidQuantityError("quantity must be > 0");
+			throw new InvalidQuantity("quantity must be > 0");
 		}
 
-		BookCopyAddedEvent event = new BookCopyAddedEvent(BookAggregate.aggregateType, isbn.getValue(),
-				new BookCopyAddedPayload(isbn.getValue(), quantity), Instant.now());
+		BookCopiesAddedEvent event = new BookCopiesAddedEvent(BookAggregate.aggregateType, isbn.getValue(),
+				new BookCopiesAddedPayload(isbn.getValue(), quantity), Instant.now());
 		manageEvent(event);
 
+	}
+
+	public void removeCopies(int quantity, String reason) {
+		
+		ensureRegistered();
+		
+		if (quantity <= 0) {
+			throw new InvalidQuantity("quantity must be > 0");
+		}
+		
+		int copiesAvailable = totalCopies - (borrowed + reserved);
+		if (copiesAvailable < quantity) {
+		      throw new CannotRemoveBookCopies(String.format("Cannot remove %d copies, total copies available %d", 
+		    		  quantity, copiesAvailable));
+		}
+		
+		BookCopiesRemovedEvent event = new BookCopiesRemovedEvent(BookAggregate.aggregateType, isbn.getValue(),
+				new BookCopiesRemovedPayload(isbn.getValue(), quantity, reason), Instant.now());
+		manageEvent(event);
+		
 	}
 
 	private void manageEvent(BookEvent event) {
@@ -90,7 +119,7 @@ public class BookAggregate {
 
 	private void ensureRegistered() {
 		if (!isRegistered) {
-			throw new BookNotRegisteredError(String.format("Book not registered, ISBN: %s", isbn));
+			throw new BookNotRegistered(String.format("Book not registered, ISBN: %s", isbn));
 		}
 
 	}

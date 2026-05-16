@@ -4,11 +4,11 @@ import java.time.Instant;
 
 import mentoring.acomi.library.domain.events.DomainEventType;
 
-public record BookCopyAddedEvent (
+public record BookCopiesAddedEvent (
 		String aggregateType,
 	    String aggregateId,
-        BookCopyAddedPayload payload,
+        BookCopiesAddedPayload payload,
         Instant occurredAt
         )implements BookEvent {
-    @Override public DomainEventType type() { return DomainEventType.BookCopyAdded; }
+    @Override public DomainEventType type() { return DomainEventType.BookCopiesAdded; }
 }

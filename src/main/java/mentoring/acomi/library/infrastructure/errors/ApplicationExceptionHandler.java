@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import mentoring.acomi.library.application.errors.ApplicationConflictError;
-import mentoring.acomi.library.domain.books.errors.BookNotRegisteredError;
-import mentoring.acomi.library.domain.books.errors.InvalidQuantityError;
+import mentoring.acomi.library.domain.books.errors.BookNotRegistered;
+import mentoring.acomi.library.domain.books.errors.CannotRemoveBookCopies;
+import mentoring.acomi.library.domain.books.errors.InvalidQuantity;
 import mentoring.acomi.library.domain.common.errors.ValidationDomainError;
 import mentoring.acomi.library.infrastructure.errors.dto.ErrorResponse;
 
@@ -51,15 +52,21 @@ public class ApplicationExceptionHandler {
 		return handleException(e, e.getCode(), e.getMessage(), e.getType());
 	}
 		
-	@ExceptionHandler(InvalidQuantityError.class)
+	@ExceptionHandler(InvalidQuantity.class)
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
-	public ErrorResponse handleInvalidQuantityError(InvalidQuantityError e) throws Exception {
+	public ErrorResponse handleInvalidQuantityError(InvalidQuantity e) throws Exception {
 		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
 	}
 	
-	@ExceptionHandler(BookNotRegisteredError.class)
+	@ExceptionHandler(BookNotRegistered.class)
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
-	public ErrorResponse handleBookNotRegisteredError(BookNotRegisteredError e) throws Exception {
+	public ErrorResponse handleBookNotRegisteredError(BookNotRegistered e) throws Exception {
+		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
+	}
+	
+	@ExceptionHandler(CannotRemoveBookCopies.class)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+	public ErrorResponse handleCannotRemoveBookCopiesError(CannotRemoveBookCopies e) throws Exception {
 		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
 	}
 	

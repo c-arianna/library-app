@@ -8,6 +8,7 @@ import mentoring.acomi.library.application.repositories.EventRepository;
 import mentoring.acomi.library.application.services.BookService;
 import mentoring.acomi.library.common.TestConstants;
 import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
+import mentoring.acomi.library.infrastructure.dto.books.AddBookCopiesRequest;
 import mentoring.acomi.library.support.TestContext;
 
 import org.springframework.http.MediaType;
@@ -44,10 +45,10 @@ public class BookSteps {
 
 	private RestTestClient client;
 
-	/* 
-	 *  ############################### GIVEN #####################################
+	/*
+	 * ############################### GIVEN #####################################
 	 */
-	
+
 	@Given("l'amministratore aggiunge un libro con isbn {string}, autore {string}, titolo {string} e descrizione")
 	public void addBook(String isbn, String author, String title, DocString description) {
 
@@ -58,10 +59,15 @@ public class BookSteps {
 		service.addBook(request);
 	}
 
-	/* 
-	 *  ############################### WHEN #####################################
-	 */
+	@Given("l'amministratore aggiunge {int} copie del libro {string}")
+	public void addCopies(int quantity, String isnb) {
+		service.addBookCopies(new AddBookCopiesRequest(quantity), isnb);
+	}
 	
+	/*
+	 * ############################### WHEN #####################################
+	 */
+
 	@When("l'amministratore aggiunge un libro al catalogo con i seguenti dati:")
 	public void createBook(DocString body) {
 
@@ -106,24 +112,42 @@ public class BookSteps {
 		world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
 	}
 
-	@When("l'amministratore aggiunge una copia del libro, con i seguenti dati:")
-	public void addBokCopy(DocString body) {
+	@When("l'amministratore aggiunge una copia del libro {string}, con i seguenti dati:")
+	public void addBokCopy(String isbn, DocString body) {
 
 		String url = new StringBuilder().append(TestConstants.API_URL).append(port).toString();
 		client = RestTestClient.bindToServer().baseUrl(url).build();
 
-		var result = client.post().uri("/books/add/bookcopy").contentType(MediaType.APPLICATION_JSON).body(body.getContent())
-				.exchange().expectBody().returnResult();
+		var result = client.post().uri(String.format("/books/%s/copies/add", isbn))
+				.contentType(MediaType.APPLICATION_JSON).body(body.getContent()).exchange().expectBody().returnResult();
 
 		world.lastStatus = result.getStatus().value();
-		world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
 
+		if (result.getResponseBody() != null) {
+			world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
+		}
 	}
 	
-	/* 
-	 *  ############################### THEN #####################################
+	@When("l'amministratore rimuove copie del libro {string}, con i seguenti dati:")
+	public void removeVookCopies(String isbn, DocString body) {
+		
+		String url = new StringBuilder().append(TestConstants.API_URL).append(port).toString();
+		client = RestTestClient.bindToServer().baseUrl(url).build();
+
+		var result = client.post().uri(String.format("/books/%s/copies/remove", isbn))
+				.contentType(MediaType.APPLICATION_JSON).body(body.getContent()).exchange().expectBody().returnResult();
+
+		world.lastStatus = result.getStatus().value();
+
+		if (result.getResponseBody() != null) {
+			world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
+		}
+	}
+
+	/*
+	 * ############################### THEN #####################################
 	 */
-	
+
 	@Then("la risposta ha status code {int}")
 	public void checkResponseStatusCode(int status) {
 		Assertions.assertEquals(status, this.world.lastStatus);
@@ -174,7 +198,7 @@ public class BookSteps {
 	}
 
 	private static String normalize(String value) {
-		
+
 		if (value == null)
 			return "";
 

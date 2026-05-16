@@ -10,4 +10,5 @@ public interface BookViewRepository {
 	  public void addBook(Book book);
 	  public List<BookView> find(BookFilter filter);
 	  public void addCopies(String isbn, int quantity);
+	  public void removeCopies(String isbn, int quantity);
 }

@@ -5,7 +5,7 @@ import java.time.Instant;
 import mentoring.acomi.library.domain.events.DomainEventType;
 
 
-public sealed interface BookEvent permits BookRegisteredEvent, BookCopyAddedEvent {
+public sealed interface BookEvent permits BookRegisteredEvent, BookCopiesAddedEvent, BookCopiesRemovedEvent {
     String aggregateType();
     String aggregateId();
     Instant occurredAt();
