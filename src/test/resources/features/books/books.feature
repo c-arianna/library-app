@@ -19,7 +19,11 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         """
       Then la risposta ha status code 201
       And la risposta contiene il campo "isbn"
-	  And è stato generato l'evento "BookRegistered" con aggregateId "9788804336327"
+	  And è stato generato l'evento "BookRegistered" con aggregateId "9788804336327" e payload:
+	  | isbn        | "9788804336327"      |
+	  | author      | "Italo Calvino"      |
+      | title       | "Il barone rampante" |
+      | description | EMPTY                |
       
     Scenario: Aggiunta di un libro con richiesta non conforme al contratto API
       When l'amministratore aggiunge un libro al catalogo con i seguenti dati:
@@ -138,7 +142,9 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 204
-      And è stato generato l'evento "BookCopiesAdded" con aggregateId "9788804336327"
+      And è stato generato l'evento "BookCopiesAdded" con aggregateId "9788804336327" e payload:
+	  | isbn        | "9788804336327" |
+	  | quantity    | 1               |
       
     Scenario: Aggiunta di una copia di un libro con quantità negativa
       Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
@@ -182,7 +188,10 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 204
-      And è stato generato l'evento "BookCopiesRemoved" con aggregateId "9788804336327"
+      And è stato generato l'evento "BookCopiesRemoved" con aggregateId "9788804336327" e payload:
+	  | isbn        | "9788804336327" |
+	  | quantity    | 2               |
+	  | reason      | "Copies lost"   |
       
     Scenario: Rimozione di una copia di un libro non presente
       When l'amministratore rimuove copie del libro "9788804336327", con i seguenti dati:

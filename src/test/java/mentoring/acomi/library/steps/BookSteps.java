@@ -4,9 +4,12 @@ import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.cucumber.messages.ndjson.internal.com.fasterxml.jackson.core.type.TypeReference;
+import io.cucumber.messages.ndjson.internal.com.fasterxml.jackson.databind.ObjectMapper;
 import mentoring.acomi.library.application.repositories.EventRepository;
 import mentoring.acomi.library.application.services.BookService;
 import mentoring.acomi.library.common.TestConstants;
+import mentoring.acomi.library.domain.events.books.BookEvent;
 import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
 import mentoring.acomi.library.infrastructure.dto.books.AddBookCopiesRequest;
 import mentoring.acomi.library.support.TestContext;
@@ -63,7 +66,7 @@ public class BookSteps {
 	public void addCopies(int quantity, String isnb) {
 		service.addBookCopies(new AddBookCopiesRequest(quantity), isnb);
 	}
-	
+
 	/*
 	 * ############################### WHEN #####################################
 	 */
@@ -127,10 +130,10 @@ public class BookSteps {
 			world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
 		}
 	}
-	
+
 	@When("l'amministratore rimuove copie del libro {string}, con i seguenti dati:")
 	public void removeVookCopies(String isbn, DocString body) {
-		
+
 		String url = new StringBuilder().append(TestConstants.API_URL).append(port).toString();
 		client = RestTestClient.bindToServer().baseUrl(url).build();
 
@@ -160,9 +163,30 @@ public class BookSteps {
 		Assertions.assertNotNull(value, String.format("Missing field: %s", field));
 	}
 
-	@Then("è stato generato l'evento {string} con aggregateId {string}")
-	public void checkEvent(String eventType, String aggregateId) {
-		Assertions.assertTrue(eventRepository.existsEvent(eventType, aggregateId));
+	@Then("è stato generato l'evento {string} con aggregateId {string} e payload:")
+	public void checkEventPayload(String eventType, String aggregateId, Map<String, String> expectedRaw) {
+
+		BookEvent event = eventRepository.getEvent(eventType, aggregateId);
+
+		Assertions.assertNotNull(event);
+
+		Map<String, ExpectedValue> expectedPayload = new LinkedHashMap<>();
+		expectedRaw.forEach((k, v) -> expectedPayload.put(k, normalizeExpected(v)));
+
+		Object payload = event.payload();
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> actualPayload = mapper.convertValue(payload, new TypeReference<>() {
+		});
+
+		expectedPayload.forEach((key, expectedValue) -> {
+			
+			Object actualValue = actualPayload.get(key);
+
+			Assertions.assertNotNull(actualValue, String.format("Missing field in payload: %s", key));
+			Assertions.assertTrue(expectedValue.matches(actualValue), String.format("Mismatch on field: %s", key));
+		
+		});
+
 	}
 
 	@Then("{string} è una lista vuota")

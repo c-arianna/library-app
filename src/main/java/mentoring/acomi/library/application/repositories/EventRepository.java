@@ -9,5 +9,5 @@ public interface EventRepository {
 	public List<BookEvent> loadStream(String aggregateType, String aggregateId);
 	public boolean exists(String aggregateType, String aggregateId);
 	public List<BookEvent> loadAll();
-	public boolean existsEvent(String eventType, String aggregateId);
+	public BookEvent getEvent(String eventType, String aggregateId);
 }

@@ -52,8 +52,9 @@ public class JpaEventRepositoryAdapter implements EventRepository {
 	}
 
 	@Override
-	public boolean existsEvent(String eventType, String aggregateId) {
-		return repository.existsByEventTypeAndAggregateId(eventType, aggregateId);
+	public BookEvent getEvent(String eventType, String aggregateId) {
+		EventEntity event = repository.getByEventTypeAndAggregateId(eventType, aggregateId);
+		return mapper.toDomain(event);
 	}
 
 }
