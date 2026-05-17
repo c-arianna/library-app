@@ -1,17 +1,10 @@
-package mentoring.acomi.library.steps;
+package mentoring.acomi.library.steps.books;
 
 import io.cucumber.docstring.DocString;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.cucumber.messages.ndjson.internal.com.fasterxml.jackson.core.type.TypeReference;
-import io.cucumber.messages.ndjson.internal.com.fasterxml.jackson.databind.ObjectMapper;
-import mentoring.acomi.library.application.repositories.EventRepository;
 import mentoring.acomi.library.application.services.BookService;
 import mentoring.acomi.library.common.TestConstants;
-import mentoring.acomi.library.domain.events.books.BookEvent;
-import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
-import mentoring.acomi.library.infrastructure.dto.books.AddBookCopiesRequest;
 import mentoring.acomi.library.support.TestContext;
 
 import org.springframework.http.MediaType;
@@ -33,13 +26,9 @@ import mentoring.acomi.library.support.ExpectedValue;
 
 public class BookSteps {
 
-	private final BookService service;
-	private final EventRepository eventRepository;
 	private final TestContext world;
 
-	public BookSteps(BookService service, EventRepository eventRepository, TestContext world) {
-		this.service = service;
-		this.eventRepository = eventRepository;
+	public BookSteps(BookService service, TestContext world) {
 		this.world = world;
 	}
 
@@ -47,25 +36,6 @@ public class BookSteps {
 	int port;
 
 	private RestTestClient client;
-
-	/*
-	 * ############################### GIVEN #####################################
-	 */
-
-	@Given("l'amministratore aggiunge un libro con isbn {string}, autore {string}, titolo {string} e descrizione")
-	public void addBook(String isbn, String author, String title, DocString description) {
-
-		String bookDescription = description.getContent().trim();
-
-		AddBookRequest request = new AddBookRequest(isbn, author, title, bookDescription);
-
-		service.addBook(request);
-	}
-
-	@Given("l'amministratore aggiunge {int} copie del libro {string}")
-	public void addCopies(int quantity, String isnb) {
-		service.addBookCopies(new AddBookCopiesRequest(quantity), isnb);
-	}
 
 	/*
 	 * ############################### WHEN #####################################
@@ -150,44 +120,6 @@ public class BookSteps {
 	/*
 	 * ############################### THEN #####################################
 	 */
-
-	@Then("la risposta ha status code {int}")
-	public void checkResponseStatusCode(int status) {
-		Assertions.assertEquals(status, this.world.lastStatus);
-	}
-
-	@Then("la risposta contiene il campo {string}")
-	public void checkResponseField(String field) {
-		var context = JsonPath.parse(world.lastBody);
-		Object value = context.read(String.format("$.%s", field));
-		Assertions.assertNotNull(value, String.format("Missing field: %s", field));
-	}
-
-	@Then("è stato generato l'evento {string} con aggregateId {string} e payload:")
-	public void checkEventPayload(String eventType, String aggregateId, Map<String, String> expectedRaw) {
-
-		BookEvent event = eventRepository.getEvent(eventType, aggregateId);
-
-		Assertions.assertNotNull(event);
-
-		Map<String, ExpectedValue> expectedPayload = new LinkedHashMap<>();
-		expectedRaw.forEach((k, v) -> expectedPayload.put(k, normalizeExpected(v)));
-
-		Object payload = event.payload();
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Object> actualPayload = mapper.convertValue(payload, new TypeReference<>() {
-		});
-
-		expectedPayload.forEach((key, expectedValue) -> {
-			
-			Object actualValue = actualPayload.get(key);
-
-			Assertions.assertNotNull(actualValue, String.format("Missing field in payload: %s", key));
-			Assertions.assertTrue(expectedValue.matches(actualValue), String.format("Mismatch on field: %s", key));
-		
-		});
-
-	}
 
 	@Then("{string} è una lista vuota")
 	public void checkEmptyList(String field) {

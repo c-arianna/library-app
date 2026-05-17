@@ -37,5 +37,15 @@ public interface BookViewJpaRepository
 			    WHERE b.isbn = :isbn
 			""")
 	void removeCopies(@Param("isbn") String isbn, @Param("quantity") int quantity);
-
+	
+	@Modifying
+	@Query("""
+				UPDATE BookViewEntity b
+				SET b.totalCopies = b.totalCopies - 1,
+				    b.reservedCopies = b.reservedCopies + 1,
+				    b.updatedAt = CURRENT_TIMESTAMP
+				WHERE b.isbn = :isbn and b.availableCopies > 0
+			""")
+	void reserve(@Param("isbn") String isbn);
+	
 }

@@ -1,8 +1,8 @@
 package mentoring.acomi.library.domain.books.errors;
 
-import mentoring.acomi.library.domain.common.errors.ValidationDomainError;
+import mentoring.acomi.library.domain.common.errors.ValidationDomain;
 
-public class InvalidAuthor extends ValidationDomainError {
+public class InvalidAuthor extends ValidationDomain {
 
 	private static final long serialVersionUID = 1635856226905060585L;
 

@@ -33,6 +33,6 @@ public interface EventJpaRepository extends JpaRepository<EventEntity, Long> {
 
 	boolean existsByAggregateTypeAndAggregateId(String aggregateType, String aggregateId);
 	
-	EventEntity getByEventTypeAndAggregateId(String eventType, String aggregateId);
+	Optional<EventEntity> getByEventTypeAndAggregateId(String eventType, String aggregateId);
 
 }

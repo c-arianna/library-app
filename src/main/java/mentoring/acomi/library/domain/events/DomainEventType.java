@@ -1,5 +1,6 @@
 package mentoring.acomi.library.domain.events;
 
 public enum DomainEventType {
-	BookRegistered, BookCopiesAdded, BookCopiesRemoved
+	BookRegistered, BookCopiesAdded, BookCopiesRemoved, BookReserved, 
+	LoanRequested, LoanFailed
 }

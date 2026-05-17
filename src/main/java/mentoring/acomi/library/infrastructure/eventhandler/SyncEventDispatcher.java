@@ -12,38 +12,48 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import mentoring.acomi.library.application.eventhandler.EventDispatcher;
+import mentoring.acomi.library.domain.events.DomainEvent;
 import mentoring.acomi.library.domain.events.DomainEventType;
-import mentoring.acomi.library.domain.events.books.BookEvent;
 
 @Component
 public class SyncEventDispatcher implements EventDispatcher {
 
-	private Map<DomainEventType, List<Consumer<BookEvent>>> subscribers = new ConcurrentHashMap<>();
+	private Map<DomainEventType, List<Consumer<DomainEvent>>> subscribers = new ConcurrentHashMap<>();
 
 	private final Logger logger;
 
 	public SyncEventDispatcher(@Value("${spring.application.name}") String applicationName) {
 		this.logger = LogManager.getLogger(applicationName);
 	}
-	
+
 	@Override
-	public void dispatch(BookEvent event) {
-		
-		List<Consumer<BookEvent>> callbacks = subscribers.getOrDefault(event.type(), List.of());
-		
-		for(Consumer<BookEvent> callback : callbacks) {
+	public void dispatch(DomainEvent event) {
+
+		List<Consumer<DomainEvent>> callbacks = subscribers.getOrDefault(event.type(), List.of());
+
+		for (Consumer<DomainEvent> callback : callbacks) {
 			try {
 				callback.accept(event);
-			}catch(Exception e){
+			} catch (Exception e) {
 				logger.error("[EventDispatcher] Subscriber failed, eventType={}", event.type(), e);
 			}
 		}
-		
+
 	}
 
 	@Override
-	public void subscribe(DomainEventType eventType, Consumer<BookEvent> callback) {
-		subscribers.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(callback);	
+	public <E extends DomainEvent> void subscribe(DomainEventType eventType, Class<E> eventClass,
+			Consumer<E> callback) {
+
+		Consumer<DomainEvent> wrapper = ev -> {
+			if (!eventClass.isInstance(ev)) {
+				throw new IllegalStateException(String.format("Subscriber expected %s but got %s", 
+						eventClass.getSimpleName(), ev.getClass().getSimpleName()));
+			}
+			callback.accept(eventClass.cast(ev));
+		};
+
+		subscribers.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(wrapper);
 	}
 
 }

@@ -1,14 +1,16 @@
 package mentoring.acomi.library.application.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import mentoring.acomi.library.application.BookFilter;
 import mentoring.acomi.library.application.view.BookView;
-import mentoring.acomi.library.domain.model.books.Book;
 
 public interface BookViewRepository {
-	  public void addBook(Book book);
+	  public void addBook(BookView book);
 	  public List<BookView> find(BookFilter filter);
 	  public void addCopies(String isbn, int quantity);
 	  public void removeCopies(String isbn, int quantity);
+	  public Optional<BookView> findById(String isbn);
+	  public void reserve(String isbn);
 }

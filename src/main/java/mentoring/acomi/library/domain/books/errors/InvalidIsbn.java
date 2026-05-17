@@ -1,8 +1,8 @@
 package mentoring.acomi.library.domain.books.errors;
 
-import mentoring.acomi.library.domain.common.errors.ValidationDomainError;
+import mentoring.acomi.library.domain.common.errors.ValidationDomain;
 
-public class InvalidIsbn extends ValidationDomainError {
+public class InvalidIsbn extends ValidationDomain {
 
 	private static final long serialVersionUID = -2613570883180500587L;
 

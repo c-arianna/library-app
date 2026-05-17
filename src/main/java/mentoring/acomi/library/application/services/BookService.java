@@ -8,10 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import mentoring.acomi.library.application.BookFilter;
 import mentoring.acomi.library.application.aggregates.AggregateFactory;
 import mentoring.acomi.library.application.aggregates.BookAggregate;
-import mentoring.acomi.library.application.errors.ApplicationConflictError;
 import mentoring.acomi.library.application.repositories.BookViewRepository;
 import mentoring.acomi.library.application.repositories.EventRepository;
 import mentoring.acomi.library.application.view.BookView;
+import mentoring.acomi.library.domain.common.errors.ApplicationConflict;
 import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
 import mentoring.acomi.library.infrastructure.dto.books.BookResponse;
@@ -40,10 +40,10 @@ public class BookService {
 		String isbn = request.isbn();
 
 		if (eventRepository.exists("Book", isbn)) {
-			throw new ApplicationConflictError("BOOK_ALREADY_EXISTS", String.format("ISBN: %s", isbn));
+			throw new ApplicationConflict("BOOK_ALREADY_EXISTS", String.format("ISBN: %s", isbn));
 		}
 
-		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, request.isbn());
+		BookAggregate aggregate = aggregateFactory.loadBook(request.isbn());
 		Book book = getBook(request);
 		aggregate.register(book);
 		return new BookResponse(book.getIsbn().formatted());
@@ -57,13 +57,13 @@ public class BookService {
 
 	@Transactional
 	public void addBookCopies(AddBookCopiesRequest request, String isbn) {
-		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, isbn);
+		BookAggregate aggregate = aggregateFactory.loadBook(isbn);
 		aggregate.addCopies(request.quantity());
 	}
 
 	@Transactional
 	public void removeBookCopies(RemoveBookCopiesRequest request, String isbn) {
-		BookAggregate aggregate = aggregateFactory.load(BookAggregate.aggregateType, isbn);
+		BookAggregate aggregate = aggregateFactory.loadBook(isbn);
 		aggregate.removeCopies(request.quantity(), request.reason());
 	}
 	
@@ -73,8 +73,8 @@ public class BookService {
 
 	private BooksResponse toBooksResponse(List<BookView> books) {
 
-		List<BookDto> bookResponse = books.stream().map(b -> new BookDto(b.getIsbn(), b.getAuthor(), b.getTitle(),
-				b.getDescription(), b.getAvailableCopies() > 0)).toList();
+		List<BookDto> bookResponse = books.stream().map(b -> new BookDto(b.isbn(), b.author(), b.title(),
+				b.description(), b.availableCopies() > 0)).toList();
 
 		return new BooksResponse(bookResponse);
 	}

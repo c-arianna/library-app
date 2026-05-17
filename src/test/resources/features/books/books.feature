@@ -35,9 +35,10 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 400
-      And la risposta contiene il campo "code"
-      And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "VALIDATION_ERROR"     |
+      | type    | "VALIDATION_ERROR" |
       
     Scenario: Aggiunta di un libro con dati non validi secondo le regole di dominio
       When l'amministratore aggiunge un libro al catalogo con i seguenti dati:
@@ -47,9 +48,10 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 400
-      And la risposta contiene il campo "code"
-      And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "VALIDATION_ERROR"     |
+      | type    | "VALIDATION_ERROR" |
       
      Scenario: Aggiunta di un libro già presente nel catalogo
       Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
@@ -65,9 +67,10 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 409
-      And la risposta contiene il campo "code"
-      And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "BOOK_ALREADY_EXISTS" |
+      | type    | "CONFLICT"            |
       
   Rule: Consultazione del catalogo libri
 
@@ -158,9 +161,10 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 422
-      And la risposta contiene il campo "code"
-      And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "INVALID_BOOK_COPY_QUANTITY" |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
       
     Scenario: Aggiunta di una copia di un libro non presente
       When l'amministratore aggiunge una copia del libro "9788804336327", con i seguenti dati:
@@ -170,9 +174,10 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 422
-      And la risposta contiene il campo "code"
-      And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "BOOK_NOT_REGISTERED"        |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
       
     Scenario: Rimozione di 2 copie di un libro con successo
       Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
@@ -202,9 +207,10 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 422
-      And la risposta contiene il campo "code"
-      And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "BOOK_NOT_REGISTERED"        |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
       
     Scenario: Rimozione di una copia di un libro con quantità non valida
       Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
@@ -218,6 +224,7 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         }
         """
       Then la risposta ha status code 422
-      And la risposta contiene il campo "code"
-      And la risposta contiene il campo "type"
       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "INVALID_BOOK_COPY_QUANTITY" |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |

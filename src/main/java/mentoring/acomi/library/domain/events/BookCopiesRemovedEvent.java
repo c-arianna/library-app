@@ -1,11 +1,10 @@
-package mentoring.acomi.library.domain.events.books;
+package mentoring.acomi.library.domain.events;
 
 import java.time.Instant;
 
-import mentoring.acomi.library.domain.events.DomainEventType;
+import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
 
 public record BookCopiesRemovedEvent(
-		String aggregateType,
 	    String aggregateId,
 	    BookCopiesRemovedPayload payload,
         Instant occurredAt

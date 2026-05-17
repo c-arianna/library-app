@@ -1,5 +1,7 @@
 drop table if exists events;
 drop table if exists book_view;
+drop table if exists user_view;
+drop table if exists loan_view;
 
 CREATE TABLE IF NOT EXISTS events (
     id bigint not null auto_increment,
@@ -27,4 +29,24 @@ CREATE TABLE IF NOT EXISTS book_view (
   created_at timestamp not null default current_timestamp,
   updated_at timestamp not null default current_timestamp,
   primary key (isbn)
+);
+
+CREATE TABLE IF NOT EXISTS user_view(
+	id varchar(36) not null,
+	username varchar(100) not null,
+  created_at timestamp not null default current_timestamp,
+  updated_at timestamp not null default current_timestamp,
+	primary key(id)
+);
+
+CREATE TABLE IF NOT EXISTS loan_view (
+  id varchar(36) not null,
+  isbn varchar(17) not null,
+  user_id varchar(36) not null,
+  start_date date not null,
+  end_date date not null,
+  status ENUM('pending', 'reserved', 'confirmed', 'canceled', 'returned', 'failed') not null default 'pending',
+  created_at timestamp not null default current_timestamp,
+  updated_at timestamp not null default current_timestamp,
+  primary key(id)
 );

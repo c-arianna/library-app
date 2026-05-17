@@ -1,6 +1,7 @@
 package mentoring.acomi.library.infrastructure.persistence.repositories.adapters;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import mentoring.acomi.library.application.BookFilter;
 import mentoring.acomi.library.application.repositories.BookViewRepository;
 import mentoring.acomi.library.application.view.BookView;
-import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.infrastructure.persistence.entity.BookViewEntity;
 import mentoring.acomi.library.infrastructure.persistence.mapper.BookViewJpaMapper;
 import mentoring.acomi.library.infrastructure.persistence.repositories.BookViewJpaRepository;
@@ -26,7 +26,7 @@ public class JpaBookViewRepositoryAdapter implements BookViewRepository {
 	}
 
 	@Override
-	public void addBook(Book book) {
+	public void addBook(BookView book) {
 		BookViewEntity entity = mapper.toEntity(book);
 		repository.save(entity);
 	}
@@ -45,6 +45,17 @@ public class JpaBookViewRepositoryAdapter implements BookViewRepository {
 	@Override
 	public void removeCopies(String isbn, int quantity) {
 		repository.removeCopies(isbn, quantity);		
+	}
+
+	@Override
+	public Optional<BookView> findById(String isbn) {
+		Optional<BookViewEntity> entity = repository.findById(isbn);
+		return entity.isEmpty() ? Optional.empty() : Optional.of(mapper.toView(entity.get()));
+	}
+
+	@Override
+	public void reserve(String isbn) {
+		repository.reserve(isbn);		
 	}
 
 }
