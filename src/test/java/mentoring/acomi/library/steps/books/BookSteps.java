@@ -3,7 +3,6 @@ package mentoring.acomi.library.steps.books;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import mentoring.acomi.library.application.services.BookService;
 import mentoring.acomi.library.common.TestConstants;
 import mentoring.acomi.library.support.TestContext;
 
@@ -28,7 +27,7 @@ public class BookSteps {
 
 	private final TestContext world;
 
-	public BookSteps(BookService service, TestContext world) {
+	public BookSteps(TestContext world) {
 		this.world = world;
 	}
 

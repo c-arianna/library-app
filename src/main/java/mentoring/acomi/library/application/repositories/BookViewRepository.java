@@ -13,4 +13,6 @@ public interface BookViewRepository {
 	  public void removeCopies(String isbn, int quantity);
 	  public Optional<BookView> findById(String isbn);
 	  public void reserve(String isbn);
+	  public void borrow(String isbn);
+	  public void release(String isbn);
 }

@@ -5,10 +5,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import mentoring.acomi.library.application.repositories.BookViewRepository;
 import mentoring.acomi.library.application.view.BookView;
+import mentoring.acomi.library.domain.events.BookBorrowedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
 import mentoring.acomi.library.domain.events.BookEvent;
 import mentoring.acomi.library.domain.events.BookRegisteredEvent;
+import mentoring.acomi.library.domain.events.BookReleasedEvent;
 import mentoring.acomi.library.domain.events.BookReservedEvent;
 import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
 
@@ -29,6 +31,8 @@ public class BookProjection {
 			case BookCopiesAddedEvent e -> repository.addCopies(e.payload().isbn(), e.payload().quantity());
 			case BookCopiesRemovedEvent e -> repository.removeCopies(e.payload().isbn(), e.payload().quantity());
 			case BookReservedEvent e -> repository.reserve(e.payload().isbn());
+			case BookBorrowedEvent e -> repository.borrow(e.payload().isbn());
+			case BookReleasedEvent e -> repository.borrow(e.payload().isbn());
 		}
 
 	}

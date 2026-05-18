@@ -10,16 +10,19 @@ import mentoring.acomi.library.domain.books.errors.BookNotRegistered;
 import mentoring.acomi.library.domain.books.errors.CannotRemoveBookCopies;
 import mentoring.acomi.library.domain.books.errors.InvalidIsbn;
 import mentoring.acomi.library.domain.books.errors.InvalidQuantity;
+import mentoring.acomi.library.domain.events.BookBorrowedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
 import mentoring.acomi.library.domain.events.BookEvent;
 import mentoring.acomi.library.domain.events.BookRegisteredEvent;
+import mentoring.acomi.library.domain.events.BookReleasedEvent;
 import mentoring.acomi.library.domain.events.BookReservedEvent;
 import mentoring.acomi.library.domain.events.payload.BookCopiesAddedPayload;
 import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
 import mentoring.acomi.library.domain.events.payload.BookLoanPayload;
 import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
 import mentoring.acomi.library.domain.loans.errors.BookNotAvailable;
+import mentoring.acomi.library.domain.loans.errors.CannotBorrowWithoutReservation;
 import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.domain.model.books.ISBN;
 
@@ -45,6 +48,8 @@ public class BookAggregate extends AggregateRoot<ISBN, BookEvent> {
 		case BookCopiesAddedEvent e -> applyBookCopiesAdded(e);
 		case BookCopiesRemovedEvent e -> applyBookCopiesRemoved(e);
 		case BookReservedEvent e -> applyBookReserved(e);
+		case BookBorrowedEvent e -> applyBookBorrowed(e);
+		case BookReleasedEvent e -> applyBookReleased(e);
 		}
 	}
 
@@ -69,6 +74,28 @@ public class BookAggregate extends AggregateRoot<ISBN, BookEvent> {
 		}
 	}
 
+	private void applyBookBorrowed(BookBorrowedEvent event) {
+		String loanId = event.payload().loanId();
+
+		if (!borrowedLoans.contains(loanId)) {
+			if (reservedLoans.contains(loanId)) {
+				reservedLoans.remove(loanId);
+				reserved = Math.max(0, reserved - 1);
+			}
+			borrowedLoans.add(loanId);
+			borrowed += 1;
+		}
+	}
+
+	private void applyBookReleased(BookReleasedEvent event) {
+		
+		String loanId = event.payload().loanId();
+		if (reservedLoans.contains(loanId)) {
+			reservedLoans.remove(loanId);
+		    reserved = Math.max(0, reserved - 1);
+		}
+	}
+	
 	public void register(Book book) {
 
 		if (!book.getIsbn().equals(id.getValue())) {
@@ -131,6 +158,35 @@ public class BookAggregate extends AggregateRoot<ISBN, BookEvent> {
 					new BookLoanPayload(id.getValue(), loanId, userId), Instant.now());
 			manageEvent(event);
 		}
+	}
+
+	public void borrow(String loanId, String userId) {
+
+		ensureRegistered();
+
+		if (!borrowedLoans.contains(loanId)) {
+
+			if (!reservedLoans.contains(loanId)) {
+				throw new CannotBorrowWithoutReservation("Cannot borrow without reservation");
+			}
+
+			BookBorrowedEvent event = new BookBorrowedEvent(id.getValue(),
+					new BookLoanPayload(id.getValue(), loanId, userId), Instant.now());
+			manageEvent(event);
+
+		}
+	}
+
+	public void release(String loanId, String userId) {
+
+		ensureRegistered();
+
+		if (reservedLoans.contains(loanId)) {
+			BookReleasedEvent event = new BookReleasedEvent(id.getValue(),
+					new BookLoanPayload(id.getValue(), loanId, userId), Instant.now());
+			manageEvent(event);
+		}
+
 	}
 
 	private void ensureRegistered() {

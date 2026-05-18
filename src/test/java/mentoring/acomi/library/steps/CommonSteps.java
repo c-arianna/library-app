@@ -1,9 +1,11 @@
 package mentoring.acomi.library.steps;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
 
@@ -14,24 +16,31 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
+import mentoring.acomi.library.application.eventhandler.EventDispatcher;
 import mentoring.acomi.library.application.repositories.EventRepository;
-import mentoring.acomi.library.application.services.BookService;
+import mentoring.acomi.library.domain.events.BookBorrowedEvent;
+import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
+import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
+import mentoring.acomi.library.domain.events.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.DomainEvent;
-import mentoring.acomi.library.infrastructure.dto.books.AddBookCopiesRequest;
-import mentoring.acomi.library.infrastructure.dto.books.AddBookRequest;
+import mentoring.acomi.library.domain.events.payload.BookCopiesAddedPayload;
+import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
+import mentoring.acomi.library.domain.events.payload.BookLoanPayload;
+import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
+import mentoring.acomi.library.domain.model.books.ISBN;
 import mentoring.acomi.library.support.ExpectedValue;
 import mentoring.acomi.library.support.TestContext;
 
 public class CommonSteps {
-
-	private final BookService service;
+	
 	private final TestContext world;
 	private final EventRepository repository;
-
-	public CommonSteps(BookService service, TestContext world, EventRepository repository) {
-		this.service = service;
+	private final EventDispatcher dispatcher;
+    
+	public CommonSteps(TestContext world, EventRepository repository, EventDispatcher dispatcher) {
 		this.world = world;
 		this.repository = repository;
+		this.dispatcher = dispatcher;
 	}
 
 	/*
@@ -42,17 +51,41 @@ public class CommonSteps {
 	public void addBook(String isbn, String author, String title, DocString description) {
 
 		String bookDescription = description.getContent().trim();
-
-		AddBookRequest request = new AddBookRequest(isbn, author, title, bookDescription);
-
-		service.addBook(request);
+		isbn = ISBN.of(isbn).getValue();
+		BookRegisteredPayload payload = new BookRegisteredPayload(isbn, author, title, bookDescription);
+		BookRegisteredEvent event = new BookRegisteredEvent(isbn, payload, Instant.now());
+		repository.appendToStream(event);
+		dispatcher.dispatch(event);
 	}
 
 	@Given("l'amministratore aggiunge {int} copie del libro {string}")
-	public void addCopies(int quantity, String isnb) {
-		service.addBookCopies(new AddBookCopiesRequest(quantity), isnb);
+	public void addCopies(int quantity, String isbn) {
+		BookCopiesAddedPayload payload = new BookCopiesAddedPayload(isbn, quantity);
+		BookCopiesAddedEvent event = new BookCopiesAddedEvent(isbn, payload, Instant.now());
+		repository.appendToStream(event);
+		dispatcher.dispatch(event);
 	}
-
+	
+	@Given("una copia del libro {string} è in stato borrowed")
+	public void borrowBook(String isbn) {
+		String userId = UUID.randomUUID().toString();
+		String loanId = UUID.randomUUID().toString();
+		isbn = ISBN.of(isbn).getValue();
+		BookLoanPayload payload = new BookLoanPayload(isbn, loanId, userId);
+		BookBorrowedEvent event = new BookBorrowedEvent(isbn, payload, Instant.now());
+		repository.appendToStream(event);
+		dispatcher.dispatch(event);
+	}
+	
+	@Given("una copia del libro {string} è stata rimossa")
+	public void removeBookCopy(String isbn) {
+		isbn = ISBN.of(isbn).getValue();
+		BookCopiesRemovedPayload payload = new BookCopiesRemovedPayload(isbn, 1, "Copy Lost");
+		BookCopiesRemovedEvent event = new BookCopiesRemovedEvent(isbn, payload, Instant.now());
+		repository.appendToStream(event);
+		dispatcher.dispatch(event);
+	}
+	
 	/*
 	 * ############################### THEN #####################################
 	 */

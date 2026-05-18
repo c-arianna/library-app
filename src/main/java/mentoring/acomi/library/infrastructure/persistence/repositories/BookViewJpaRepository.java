@@ -41,11 +41,43 @@ public interface BookViewJpaRepository
 	@Modifying
 	@Query("""
 				UPDATE BookViewEntity b
-				SET b.totalCopies = b.totalCopies - 1,
-				    b.reservedCopies = b.reservedCopies + 1,
+				SET b.reservedCopies = b.reservedCopies + 1,
+				    b.availableCopies = b.availableCopies -1,
 				    b.updatedAt = CURRENT_TIMESTAMP
 				WHERE b.isbn = :isbn and b.availableCopies > 0
 			""")
 	void reserve(@Param("isbn") String isbn);
+
+	@Modifying
+	@Query("""
+			
+			    UPDATE BookViewEntity b
+			 	SET b.borrowedCopies = b.borrowedCopies + 1,
+			     	b.reservedCopies = 
+					    CASE 
+					        WHEN b.reservedCopies > 0 
+					        	THEN b.reservedCopies - 1 
+					        	ELSE b.reservedCopies 
+					     	END,
+			     	b.availableCopies = 
+			         	CASE 
+			             	WHEN b.reservedCopies > 0 
+			             		THEN b.availableCopies
+			             		ELSE b.availableCopies - 1
+			         	END,
+			     	b.updatedAt = CURRENT_TIMESTAMP
+			 		WHERE b.isbn = :isbn AND (b.reservedCopies > 0 OR b.availableCopies > 0)
+			""")
+	void borrow(@Param("isbn")String isbn);
+
+	@Modifying
+	@Query("""
+			    UPDATE BookViewEntity b
+			 	SET b.reservedCopies = b.reservedCopies - 1,
+			 	    b.availableCopies = b.availableCopies + 1,
+			 	    b.updatedAt = CURRENT_TIMESTAMP
+			 	    WHERE b.isbn = :isbn AND b.reservedCopies > 0
+			""")
+	void release(@Param("isbn")String isbn);
 	
 }

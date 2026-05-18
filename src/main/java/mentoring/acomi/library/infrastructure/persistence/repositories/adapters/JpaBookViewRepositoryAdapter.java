@@ -58,4 +58,14 @@ public class JpaBookViewRepositoryAdapter implements BookViewRepository {
 		repository.reserve(isbn);		
 	}
 
+	@Override
+	public void borrow(String isbn) {
+		repository.borrow(isbn);
+	}
+
+	@Override
+	public void release(String isbn) {
+		repository.release(isbn);
+	}
+
 }

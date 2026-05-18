@@ -4,19 +4,25 @@ import org.springframework.stereotype.Component;
 
 import mentoring.acomi.library.application.aggregates.AggregateType;
 import mentoring.acomi.library.application.errors.EventStoreInconsistencyException;
+import mentoring.acomi.library.domain.events.BookBorrowedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
 import mentoring.acomi.library.domain.events.BookRegisteredEvent;
+import mentoring.acomi.library.domain.events.BookReleasedEvent;
 import mentoring.acomi.library.domain.events.BookReservedEvent;
 import mentoring.acomi.library.domain.events.DomainEvent;
 import mentoring.acomi.library.domain.events.DomainEventType;
+import mentoring.acomi.library.domain.events.LoanCanceledEvent;
+import mentoring.acomi.library.domain.events.LoanConfirmedEvent;
 import mentoring.acomi.library.domain.events.LoanFailedEvent;
 import mentoring.acomi.library.domain.events.LoanRequestedEvent;
+import mentoring.acomi.library.domain.events.LoanReservedEvent;
 import mentoring.acomi.library.domain.events.payload.BookCopiesAddedPayload;
 import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
 import mentoring.acomi.library.domain.events.payload.BookLoanPayload;
 import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
 import mentoring.acomi.library.domain.events.payload.LoanFailedPayload;
+import mentoring.acomi.library.domain.events.payload.LoanPayload;
 import mentoring.acomi.library.domain.events.payload.LoanRequestPayload;
 import mentoring.acomi.library.infrastructure.persistence.entity.EventEntity;
 import tools.jackson.databind.JsonNode;
@@ -75,6 +81,18 @@ public class EventJpaMapper {
 			
 		}
 		
+		case BookBorrowed -> {
+			BookLoanPayload payload = objectMapper.treeToValue(event.getPayload(), BookLoanPayload.class);
+			yield new BookBorrowedEvent(event.getAggregateId(), payload, event.getOccurredAt());
+			
+		}
+		
+		case BookReleased -> {
+			BookLoanPayload payload = objectMapper.treeToValue(event.getPayload(), BookLoanPayload.class);
+			yield new BookReleasedEvent(event.getAggregateId(), payload, event.getOccurredAt());
+			
+		}
+		
 		case LoanRequested -> {
 			LoanRequestPayload payload = objectMapper.treeToValue(event.getPayload(), LoanRequestPayload.class);
 			yield new LoanRequestedEvent(event.getAggregateId(), payload, event.getOccurredAt());
@@ -85,6 +103,21 @@ public class EventJpaMapper {
 			yield new LoanFailedEvent(event.getAggregateId(), payload, event.getOccurredAt());
 		}
 
+		case LoanReserved -> {
+			LoanPayload payload = objectMapper.treeToValue(event.getPayload(), LoanPayload.class);
+			yield new LoanReservedEvent(event.getAggregateId(), payload, event.getOccurredAt());
+		}
+		
+		case LoanConfirmed -> {
+			LoanPayload payload = objectMapper.treeToValue(event.getPayload(), LoanPayload.class);
+			yield new LoanConfirmedEvent(event.getAggregateId(), payload, event.getOccurredAt());
+		}
+		
+		case LoanCanceled -> {
+			LoanPayload payload = objectMapper.treeToValue(event.getPayload(), LoanPayload.class);
+			yield new LoanCanceledEvent(event.getAggregateId(), payload, event.getOccurredAt());
+		}
+		
 		};
 
 	}

@@ -19,6 +19,8 @@ import mentoring.acomi.library.domain.common.errors.ApplicationConflict;
 import mentoring.acomi.library.domain.common.errors.NotFound;
 import mentoring.acomi.library.domain.common.errors.ValidationDomain;
 import mentoring.acomi.library.domain.loans.errors.BookNotAvailable;
+import mentoring.acomi.library.domain.loans.errors.CannotBorrowWithoutReservation;
+import mentoring.acomi.library.domain.loans.errors.InvalidLoanStateTransition;
 import mentoring.acomi.library.domain.loans.errors.LoanNotExist;
 import mentoring.acomi.library.infrastructure.errors.dto.ErrorResponse;
 
@@ -94,6 +96,18 @@ public class ApplicationExceptionHandler {
 	@ExceptionHandler(LoanNotExist.class)
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public ErrorResponse handleLoanNotCreatedError(LoanNotExist e) throws Exception {
+		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
+	}
+	
+	@ExceptionHandler(InvalidLoanStateTransition.class)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+	public ErrorResponse handleInvalidLoanStateTransitionError(InvalidLoanStateTransition e) throws Exception {
+		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
+	}
+	
+	@ExceptionHandler(CannotBorrowWithoutReservation.class)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+	public ErrorResponse handleCannotBorrowWithoutReservationError(CannotBorrowWithoutReservation e) throws Exception {
 		return handleException(e, e.getCode(), e.getMessage(), "AGGREGATE_INVARIANT_FAILED");
 	}
 	

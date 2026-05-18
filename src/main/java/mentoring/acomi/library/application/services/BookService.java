@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import mentoring.acomi.library.application.BookFilter;
 import mentoring.acomi.library.application.aggregates.AggregateFactory;
+import mentoring.acomi.library.application.aggregates.AggregateType;
 import mentoring.acomi.library.application.aggregates.BookAggregate;
 import mentoring.acomi.library.application.repositories.BookViewRepository;
 import mentoring.acomi.library.application.repositories.EventRepository;
@@ -39,7 +40,7 @@ public class BookService {
 
 		String isbn = request.isbn();
 
-		if (eventRepository.exists("Book", isbn)) {
+		if (eventRepository.exists(AggregateType.BOOK.name(), isbn)) {
 			throw new ApplicationConflict("BOOK_ALREADY_EXISTS", String.format("ISBN: %s", isbn));
 		}
 

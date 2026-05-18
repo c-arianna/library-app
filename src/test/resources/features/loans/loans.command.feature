@@ -75,3 +75,83 @@ Feature: Gestione dei prestiti dei libri tramite l'applicazione
       And la risposta contiene i seguenti campi:
       | code    | "VALIDATION_ERROR" |
       | type    | "VALIDATION_ERROR" |
+      
+    Scenario: Creazione di una richiesta di prestito per un libro non disponibile
+      Given una copia del libro "9788804336327" è in stato borrowed
+      When l'utente crea una richiesta di prestito con i seguenti dati:
+        """
+        {
+          "isbn": "9788804336327",
+          "userId": "${USER_ID}",
+          "startDate": "2026-02-23"
+        }
+        """
+      Then la risposta ha status code 422
+       And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "BOOK_NOT_AVAILABLE" |
+      | type    | "BOOK_NOT_AVAILABLE" |
+      
+  Rule: Conferma della prenotazione di un prestito
+  
+    Scenario: Conferma di una richiesta di prestito in stato pending
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      When l'amministratore conferma la richiesta del prestito
+      Then la risposta ha status code 204
+      And è stato generato l'evento "BookBorrowed" con aggregateId "9788804336327" e payload:
+        | loanId | ${LOAN_ID}      |
+        | isbn   | "9788804336327" |
+        | userId | ${USER_ID}      |
+      And è stato generato l'evento "LoanConfirmed" con aggregateId "${LOAN_ID}" e payload:
+        | id     | ${LOAN_ID}      |
+        | isbn   | "9788804336327" |
+        | userId | ${USER_ID}      |
+        
+    Scenario: Conferma di una richiesta di prestito non esistente
+      Given il prestito con ID "100" non esiste
+      When l'amministratore conferma la richiesta del prestito
+      Then la risposta ha status code 422
+      And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "LOAN_NOT_CREATED"           |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
+      
+    Scenario: Conferma di una richiesta di prestito non in stato pending
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      And il prestito del libro "9788804336327" è stato annullato
+      When l'amministratore conferma la richiesta del prestito
+      Then la risposta ha status code 422
+      And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "INVALID_STATE_TRANSATION"   |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
+      
+  Rule: Annullo di una richiesta di prestito
+  
+    Scenario: Annullo di una richiesta di prestito in stato pending
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      When l'amministratore annulla la richiesta del prestito
+      Then la risposta ha status code 204
+      And è stato generato l'evento "LoanCanceled" con aggregateId "${LOAN_ID}" e payload:
+      | id     | ${LOAN_ID}      |
+      | isbn   | "9788804336327" |
+      | userId | ${USER_ID}      |
+        
+    Scenario: Annullo di una richiesta di prestito non in stato pending
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      And il prestito del libro "9788804336327" è stato confermato
+      When l'amministratore annulla la richiesta del prestito
+      Then la risposta ha status code 422
+      And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "INVALID_STATE_TRANSATION"   |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
+      
+    Scenario: Annullo di una richiesta di prestito inesistente
+      Given il prestito con ID "100" non esiste
+      When l'amministratore annulla la richiesta del prestito
+      Then la risposta ha status code 422
+      And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "LOAN_NOT_CREATED"           |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |

@@ -131,6 +131,31 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
         | title       | "Il barone rampante"                                                            |
         | description | "Il barone rampante (1957) è il secondo libro della trilogia I nostri antenati" |
         
+    Scenario: Consultazione del catalogo filtrata per autore e solo disponibili
+      Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
+        """
+
+        """
+      And l'amministratore aggiunge 2 copie del libro "9788804336327"
+      And una copia del libro "9788804336327" è in stato borrowed
+      And l'amministratore aggiunge un libro con isbn "9788804776369", autore "Italo Calvino", titolo "Il visconte dimezzato" e descrizione
+        """
+
+        """
+      And l'amministratore aggiunge 1 copie del libro "9788804776369"
+      And una copia del libro "9788804776369" è stata rimossa
+      When l'utente visualizza il catalogo dei libri, con filtro di ricerca
+        | author        | Italo Calvino |
+        | onlyAvailable | true          |
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "books"
+      And "books" contiene 1 elementi
+      And "books" ha un elemento con i campi:
+        | isbn        | "9788804336327"         |
+        | author      | "Italo Calvino"         |
+        | title       | "Il barone rampante"    |
+        | description | EMPTY                   |
+        
   Rule: Gestione delle copie di un libro
   
     Scenario: aggiunta di una copia di un libro con successo
@@ -228,3 +253,24 @@ Feature: Gestione del catalogo della biblioteca tramite l'applicazione
       And la risposta contiene i seguenti campi:
       | code    | "INVALID_BOOK_COPY_QUANTITY" |
       | type    | "AGGREGATE_INVARIANT_FAILED" |
+      
+    Scenario: Rimozione di una copia di libro in prestito
+      Given l'amministratore aggiunge un libro con isbn "9788804336327", autore "Italo Calvino", titolo "Il barone rampante" e descrizione
+        """
+
+        """
+      And l'amministratore aggiunge 2 copie del libro "9788804336327"
+      And una copia del libro "9788804336327" è in stato borrowed
+      When l'amministratore rimuove copie del libro "9788804336327", con i seguenti dati:
+        """
+        {
+          "quantity": 2,
+          "reason": "Copies lost"
+        }
+        """
+      Then la risposta ha status code 422
+      And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "CANNOT_REMOVE_BOOK_COPIES"  |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
+	  

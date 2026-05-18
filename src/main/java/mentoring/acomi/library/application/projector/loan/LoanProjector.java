@@ -14,7 +14,7 @@ public class LoanProjector {
 		this.projection = projection;
 	}
 
-	public void project(LoanEvent bookEvent) {
-		projection.updateView(bookEvent);
+	public void project(LoanEvent loanEvent) {
+		projection.updateView(loanEvent);
 	}
 }
