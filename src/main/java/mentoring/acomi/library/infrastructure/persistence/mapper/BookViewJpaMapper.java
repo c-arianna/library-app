@@ -18,8 +18,9 @@ public class BookViewJpaMapper {
 			return null;
 		}
 		
+		int availableCopies = entity.getTotalCopies() - entity.getBorrowedCopies() - entity.getReservedCopies();
 		return new BookView(entity.getIsbn(), entity.getAuthor(), entity.getTitle(), entity.getDescription(),
-				entity.getTotalCopies(), entity.getAvailableCopies(), entity.getBorrowedCopies(),
+				entity.getTotalCopies(), availableCopies, entity.getBorrowedCopies(),
 				entity.getReservedCopies());	
 	}
 

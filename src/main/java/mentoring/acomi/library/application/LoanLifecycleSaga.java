@@ -12,6 +12,7 @@ import mentoring.acomi.library.domain.books.errors.BookNotRegistered;
 import mentoring.acomi.library.domain.events.BookReservedEvent;
 import mentoring.acomi.library.domain.events.LoanCanceledEvent;
 import mentoring.acomi.library.domain.events.LoanRequestedEvent;
+import mentoring.acomi.library.domain.events.LoanReturnedEvent;
 import mentoring.acomi.library.domain.loans.errors.BookNotAvailable;
 import mentoring.acomi.library.domain.loans.errors.BookNotFound;
 
@@ -37,6 +38,10 @@ public class LoanLifecycleSaga {
 	public void onLoanCanceled(LoanCanceledEvent event) {
 		handleLoanCanceled(event);
 	}
+	
+	public void onLoanReturned(LoanReturnedEvent event) {
+        handleLoanReturned(event);
+    }
 
 	private void handleLoanRequested(LoanRequestedEvent event) {
 
@@ -84,6 +89,22 @@ public class LoanLifecycleSaga {
 		}
 	}
 
+	private void handleLoanReturned(LoanReturnedEvent event) {
+
+        var payload = event.payload();
+        String isbn = payload.isbn();
+        String loanId = payload.id();
+        String userId = payload.userId();
+
+        try {
+            BookAggregate book = aggregateFactory.loadBook(isbn);
+            book.returnBorrowed(loanId, userId);
+
+        } catch (Exception e) {
+            logger.warn("Ignoring error on LoanReturned, loanId={}", loanId, e);
+        }
+    }
+	
 	private void fail(String loanId, LoanFailedReason reason) {
 		LoanAggregate loan = aggregateFactory.loadLoan(loanId);
 		loan.fail(reason);

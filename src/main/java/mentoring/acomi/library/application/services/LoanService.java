@@ -58,7 +58,6 @@ public class LoanService {
 		return new LoanResponse(loanId);
 	}
 
-	@Transactional
 	public void confirmLoan(String loanId) {
 		LoanAggregate loanAggregate = aggregateFactory.loadLoan(loanId);
 
@@ -92,6 +91,12 @@ public class LoanService {
 	public void cancelLoan(String loanId) {
 		LoanAggregate aggregate = aggregateFactory.loadLoan(loanId);
 		aggregate.cancel();		
+	}
+	
+	@Transactional
+	public void returnLoan(String loanId) {
+		LoanAggregate aggregate = aggregateFactory.loadLoan(loanId);
+		aggregate.returnLoan();		
 	}
 
 	private void validateLoanRequest(AddLoanRequest request, String loanId) {

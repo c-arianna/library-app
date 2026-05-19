@@ -15,4 +15,5 @@ public interface BookViewRepository {
 	  public void reserve(String isbn);
 	  public void borrow(String isbn);
 	  public void release(String isbn);
+	  public void returnBorrowed(String isbn);
 }

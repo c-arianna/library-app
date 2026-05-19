@@ -1,5 +1,7 @@
 package mentoring.acomi.library.infrastructure.persistence.repositories.adapters;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
 import mentoring.acomi.library.application.repositories.LoanViewRepository;
@@ -29,6 +31,12 @@ public class JpaLoanViewRepositoryAdapter implements LoanViewRepository {
 	@Override
 	public void updateStatus(String id, LoanStatus status) {
 		repository.updateStatus(id, status);
+	}
+
+	@Override
+	public Optional<LoanView> findById(String id) {
+		Optional<LoanViewEntity> entity = repository.findById(id);
+		return entity.isEmpty() ? Optional.empty() : Optional.of(mapper.toView(entity.get()));
 	}
 
 }

@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS book_view (
   description varchar(500),
   total_copies integer not null default 0,
   borrowed_copies integer not null default 0,
-  available_copies integer not null default 0,
   reserved_copies integer not null default 0,
   created_at timestamp not null default current_timestamp,
   updated_at timestamp not null default current_timestamp,
@@ -42,7 +41,7 @@ CREATE TABLE IF NOT EXISTS loan_view (
   user_id varchar(36) not null,
   start_date date not null,
   end_date date not null,
-  status ENUM('pending', 'reserved', 'confirmed', 'canceled', 'returned', 'failed') not null default 'pending',
+  status ENUM('PENDING', 'RESERVED', 'CONFIRMED', 'CANCELED', 'RETURNED', 'FAILED') not null default 'PENDING',
   created_at timestamp not null default current_timestamp,
   updated_at timestamp not null default current_timestamp,
   primary key(id)

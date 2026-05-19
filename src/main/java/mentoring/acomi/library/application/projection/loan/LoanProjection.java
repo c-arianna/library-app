@@ -12,6 +12,7 @@ import mentoring.acomi.library.domain.events.LoanEvent;
 import mentoring.acomi.library.domain.events.LoanFailedEvent;
 import mentoring.acomi.library.domain.events.LoanRequestedEvent;
 import mentoring.acomi.library.domain.events.LoanReservedEvent;
+import mentoring.acomi.library.domain.events.LoanReturnedEvent;
 import mentoring.acomi.library.domain.events.payload.LoanRequestPayload;
 import mentoring.acomi.library.domain.model.loans.LoanStatus;
 
@@ -33,6 +34,7 @@ public class LoanProjection {
 			case LoanReservedEvent e -> repository.updateStatus(e.payload().id(), LoanStatus.RESERVED);
 			case LoanConfirmedEvent e -> repository.updateStatus(e.payload().id(), LoanStatus.CONFIRMED);
 			case LoanCanceledEvent e -> repository.updateStatus(e.payload().id(), LoanStatus.CANCELED);
+			case LoanReturnedEvent e -> repository.updateStatus(e.payload().id(), LoanStatus.RETURNED);
 		}
 
 	}

@@ -13,6 +13,7 @@ import mentoring.acomi.library.domain.events.LoanEvent;
 import mentoring.acomi.library.domain.events.LoanFailedEvent;
 import mentoring.acomi.library.domain.events.LoanRequestedEvent;
 import mentoring.acomi.library.domain.events.LoanReservedEvent;
+import mentoring.acomi.library.domain.events.LoanReturnedEvent;
 import mentoring.acomi.library.domain.events.payload.LoanFailedPayload;
 import mentoring.acomi.library.domain.events.payload.LoanPayload;
 import mentoring.acomi.library.domain.events.payload.LoanRequestPayload;
@@ -30,7 +31,7 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 			LoanStatus.RETURNED, List.of(), 
 			LoanStatus.FAILED, List.of(), 
 			LoanStatus.CONFIRMED, List.of(LoanStatus.RETURNED), 
-			LoanStatus.RESERVED, List.of(LoanStatus.CONFIRMED, LoanStatus.CANCELED));
+			LoanStatus.RESERVED, List.of(LoanStatus.CONFIRMED, LoanStatus.CANCELED, LoanStatus.FAILED));
 
 	private boolean isCreated = false;
 	private LoanStatus status;
@@ -51,6 +52,7 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 		case LoanReservedEvent e -> applyLoanReservedEvent(e);
 		case LoanConfirmedEvent e -> applyLoanConfirmedEvent(e);
 		case LoanCanceledEvent e -> applyLoanCanceledEvent(e);
+		case LoanReturnedEvent e -> applyLoanReturnedEvent(e);
 		}
 
 	}
@@ -80,6 +82,10 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 		status = LoanStatus.CANCELED;
 	}
 
+	private void applyLoanReturnedEvent(LoanReturnedEvent e) {
+		status = LoanStatus.RETURNED;
+	}
+	
 	public void add(Loan loan) {
 
 		if (this.isCreated) {
@@ -153,6 +159,21 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 
 	}
 	
+	public void returnLoan() {
+		
+		ensureCreated();
+		
+		if (!LoanStatus.RETURNED.equals(status)) {
+			
+			ensureTransitionAllowed(LoanStatus.RETURNED);
+			
+			LoanReturnedEvent event = new LoanReturnedEvent(id.getValue(),
+					new LoanPayload(id.getValue(), isbn, userId), Instant.now());
+			manageEvent(event);
+		}
+		
+	}
+	
 	public void ensureCreated() {
 		if (!isCreated) {
 			throw new LoanNotExist("Loan not exists");
@@ -180,4 +201,5 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 	public String getUserId() {
 		return userId;
 	}
+
 }

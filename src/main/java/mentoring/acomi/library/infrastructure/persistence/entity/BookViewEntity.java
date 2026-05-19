@@ -26,7 +26,6 @@ public class BookViewEntity {
 	private String description;
 	private int totalCopies;
 	private int borrowedCopies;
-	private int availableCopies;
 	private int reservedCopies;
 	
 	@Column(nullable = false, updatable = false)

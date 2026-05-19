@@ -155,3 +155,33 @@ Feature: Gestione dei prestiti dei libri tramite l'applicazione
       And la risposta contiene i seguenti campi:
       | code    | "LOAN_NOT_CREATED"           |
       | type    | "AGGREGATE_INVARIANT_FAILED" |
+      
+  Rule: Restituzione di un libro prestato
+  
+    Scenario: Registrazione del reso di un prestito confermato
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      And il prestito del libro "9788804336327" è stato confermato
+      When l'amministratore esegue l'operazione di reso del prestito
+      Then la risposta ha status code 204
+      And è stato generato l'evento "LoanReturned" con aggregateId "${LOAN_ID}" e payload:
+      | id     | ${LOAN_ID}      |
+      | isbn   | "9788804336327" |
+      | userId | ${USER_ID}      |
+      
+    Scenario: Conferma restituzione di un libro prestato, con richiesta in stato non "confirmed"
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      When l'amministratore esegue l'operazione di reso del prestito
+      Then la risposta ha status code 422
+      And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "INVALID_STATE_TRANSATION"   |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |
+      
+    Scenario: Conferma restituzione di un libro prestato, con richiesta di prestito non esistente
+      Given il prestito con ID "100" non esiste
+      When l'amministratore esegue l'operazione di reso del prestito
+      Then la risposta ha status code 422
+      And la risposta contiene il campo "message"
+      And la risposta contiene i seguenti campi:
+      | code    | "LOAN_NOT_CREATED"           |
+      | type    | "AGGREGATE_INVARIANT_FAILED" |

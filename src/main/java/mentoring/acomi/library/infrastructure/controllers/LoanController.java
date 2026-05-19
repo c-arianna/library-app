@@ -39,5 +39,11 @@ public class LoanController {
 	public void cancelLoan(@PathVariable String loanId) {
 		service.cancelLoan(loanId);
 	}
+	
+	@PostMapping("/{loanId}/return")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void returnLoan(@PathVariable String loanId) {
+		service.returnLoan(loanId);
+	}
 
 }

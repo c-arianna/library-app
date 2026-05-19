@@ -68,4 +68,9 @@ public class JpaBookViewRepositoryAdapter implements BookViewRepository {
 		repository.release(isbn);
 	}
 
+	@Override
+	public void returnBorrowed(String isbn) {
+		repository.returnBorrowed(isbn);		
+	}
+
 }

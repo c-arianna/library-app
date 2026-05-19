@@ -10,6 +10,7 @@ import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
 import mentoring.acomi.library.domain.events.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.BookReleasedEvent;
 import mentoring.acomi.library.domain.events.BookReservedEvent;
+import mentoring.acomi.library.domain.events.BookReturnedEvent;
 import mentoring.acomi.library.domain.events.DomainEvent;
 import mentoring.acomi.library.domain.events.DomainEventType;
 import mentoring.acomi.library.domain.events.LoanCanceledEvent;
@@ -17,6 +18,7 @@ import mentoring.acomi.library.domain.events.LoanConfirmedEvent;
 import mentoring.acomi.library.domain.events.LoanFailedEvent;
 import mentoring.acomi.library.domain.events.LoanRequestedEvent;
 import mentoring.acomi.library.domain.events.LoanReservedEvent;
+import mentoring.acomi.library.domain.events.LoanReturnedEvent;
 import mentoring.acomi.library.domain.events.payload.BookCopiesAddedPayload;
 import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
 import mentoring.acomi.library.domain.events.payload.BookLoanPayload;
@@ -93,6 +95,12 @@ public class EventJpaMapper {
 			
 		}
 		
+		case BookReturned -> {
+			BookLoanPayload payload = objectMapper.treeToValue(event.getPayload(), BookLoanPayload.class);
+			yield new BookReturnedEvent(event.getAggregateId(), payload, event.getOccurredAt());
+			
+		}
+		
 		case LoanRequested -> {
 			LoanRequestPayload payload = objectMapper.treeToValue(event.getPayload(), LoanRequestPayload.class);
 			yield new LoanRequestedEvent(event.getAggregateId(), payload, event.getOccurredAt());
@@ -116,6 +124,11 @@ public class EventJpaMapper {
 		case LoanCanceled -> {
 			LoanPayload payload = objectMapper.treeToValue(event.getPayload(), LoanPayload.class);
 			yield new LoanCanceledEvent(event.getAggregateId(), payload, event.getOccurredAt());
+		}
+		
+		case LoanReturned -> {
+			LoanPayload payload = objectMapper.treeToValue(event.getPayload(), LoanPayload.class);
+			yield new LoanReturnedEvent(event.getAggregateId(), payload, event.getOccurredAt());
 		}
 		
 		};
