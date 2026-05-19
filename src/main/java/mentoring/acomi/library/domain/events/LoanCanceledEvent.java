@@ -8,7 +8,7 @@ public record LoanCanceledEvent(
 		String aggregateId,
 	    LoanPayload payload,
         Instant occurredAt
-        )implements LoanEvent {
+        )implements LoanStateEvent {
     @Override public DomainEventType type() { return DomainEventType.LoanCanceled; }
 
 }

@@ -8,6 +8,6 @@ public record LoanFailedEvent(
 	    String aggregateId,
 	    LoanFailedPayload payload,
         Instant occurredAt
-        )implements LoanEvent {
+        )implements LoanStateEvent {
     @Override public DomainEventType type() { return DomainEventType.LoanFailed; }
 }

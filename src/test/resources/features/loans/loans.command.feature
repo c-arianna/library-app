@@ -98,11 +98,7 @@ Feature: Gestione dei prestiti dei libri tramite l'applicazione
       Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
       When l'amministratore conferma la richiesta del prestito
       Then la risposta ha status code 204
-      And è stato generato l'evento "BookBorrowed" con aggregateId "9788804336327" e payload:
-        | loanId | ${LOAN_ID}      |
-        | isbn   | "9788804336327" |
-        | userId | ${USER_ID}      |
-      And è stato generato l'evento "LoanConfirmed" con aggregateId "${LOAN_ID}" e payload:
+      And è stato generato l'evento "LoanConfirmRequested" con aggregateId "${LOAN_ID}" e payload:
         | id     | ${LOAN_ID}      |
         | isbn   | "9788804336327" |
         | userId | ${USER_ID}      |

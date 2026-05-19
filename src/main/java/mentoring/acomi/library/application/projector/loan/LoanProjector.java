@@ -3,7 +3,7 @@ package mentoring.acomi.library.application.projector.loan;
 import org.springframework.stereotype.Component;
 
 import mentoring.acomi.library.application.projection.loan.LoanProjection;
-import mentoring.acomi.library.domain.events.LoanEvent;
+import mentoring.acomi.library.domain.events.LoanStateEvent;
 
 @Component
 public class LoanProjector {
@@ -14,7 +14,7 @@ public class LoanProjector {
 		this.projection = projection;
 	}
 
-	public void project(LoanEvent loanEvent) {
-		projection.updateView(loanEvent);
+	public void project(LoanStateEvent loanStateEvent) {
+		projection.updateView(loanStateEvent);
 	}
 }

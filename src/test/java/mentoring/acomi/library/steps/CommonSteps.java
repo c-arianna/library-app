@@ -2,6 +2,7 @@ package mentoring.acomi.library.steps;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -18,16 +19,20 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import mentoring.acomi.library.application.eventhandler.EventDispatcher;
 import mentoring.acomi.library.application.repositories.EventRepository;
+import mentoring.acomi.library.domain.common.DateRange;
 import mentoring.acomi.library.domain.events.BookBorrowedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
 import mentoring.acomi.library.domain.events.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.DomainEvent;
+import mentoring.acomi.library.domain.events.LoanRequestedEvent;
 import mentoring.acomi.library.domain.events.payload.BookCopiesAddedPayload;
 import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
 import mentoring.acomi.library.domain.events.payload.BookLoanPayload;
 import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
+import mentoring.acomi.library.domain.events.payload.LoanRequestPayload;
 import mentoring.acomi.library.domain.model.books.ISBN;
+import mentoring.acomi.library.domain.model.loans.LoanStatus;
 import mentoring.acomi.library.support.ExpectedValue;
 import mentoring.acomi.library.support.TestContext;
 
@@ -68,13 +73,22 @@ public class CommonSteps {
 	
 	@Given("una copia del libro {string} è in stato borrowed")
 	public void borrowBook(String isbn) {
+		
 		String userId = UUID.randomUUID().toString();
 		String loanId = UUID.randomUUID().toString();
-		isbn = ISBN.of(isbn).getValue();
-		BookLoanPayload payload = new BookLoanPayload(isbn, loanId, userId);
-		BookBorrowedEvent event = new BookBorrowedEvent(isbn, payload, Instant.now());
+		DateRange period = new DateRange(LocalDate.now(), null);
+
+		LoanRequestPayload payload = new LoanRequestPayload(loanId, ISBN.of(isbn).getValue(), userId, period,
+				LoanStatus.PENDING);
+		LoanRequestedEvent event = new LoanRequestedEvent(loanId, payload, Instant.now());
 		repository.appendToStream(event);
 		dispatcher.dispatch(event);
+		
+		isbn = ISBN.of(isbn).getValue();
+		BookLoanPayload bookPayload = new BookLoanPayload(isbn, loanId, userId);
+		BookBorrowedEvent bookEvent = new BookBorrowedEvent(isbn, bookPayload, Instant.now());
+		repository.appendToStream(bookEvent);
+		dispatcher.dispatch(bookEvent);
 	}
 	
 	@Given("una copia del libro {string} è stata rimossa")

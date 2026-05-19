@@ -8,7 +8,7 @@ public record BookRegisteredEvent(
     String aggregateId,
     BookRegisteredPayload payload,
     Instant occurredAt   
-) implements BookEvent {
+) implements BookStateEvent {
     @Override public DomainEventType type() { return DomainEventType.BookRegistered; }
 }
 

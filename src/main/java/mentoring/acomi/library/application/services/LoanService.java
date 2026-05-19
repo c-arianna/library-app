@@ -5,10 +5,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import mentoring.acomi.library.application.LoanFailedReason;
 import mentoring.acomi.library.application.aggregates.AggregateFactory;
 import mentoring.acomi.library.application.aggregates.AggregateType;
-import mentoring.acomi.library.application.aggregates.BookAggregate;
 import mentoring.acomi.library.application.aggregates.LoanAggregate;
 import mentoring.acomi.library.application.repositories.BookViewRepository;
 import mentoring.acomi.library.application.repositories.EventRepository;
@@ -18,7 +16,6 @@ import mentoring.acomi.library.application.view.UserView;
 import mentoring.acomi.library.domain.common.errors.ApplicationConflict;
 import mentoring.acomi.library.domain.loans.errors.BookNotAvailable;
 import mentoring.acomi.library.domain.loans.errors.BookNotFound;
-import mentoring.acomi.library.domain.loans.errors.CannotBorrowWithoutReservation;
 import mentoring.acomi.library.domain.loans.errors.InvalidLoanStateTransition;
 import mentoring.acomi.library.domain.loans.errors.UserNotFound;
 import mentoring.acomi.library.domain.model.loans.Loan;
@@ -58,32 +55,18 @@ public class LoanService {
 		return new LoanResponse(loanId);
 	}
 
+	@Transactional
 	public void confirmLoan(String loanId) {
+		
 		LoanAggregate loanAggregate = aggregateFactory.loadLoan(loanId);
 
 		loanAggregate.ensureCreated();
 		
-		if (!loanAggregate.isReservableState()) {
+		if (!loanAggregate.isConfirmable()) {
 			throw new InvalidLoanStateTransition("Cannot confirm loan");
 		}
 
-		String isbn = loanAggregate.getIsbn();
-		String userId = loanAggregate.getUserId();
-
-		try {
-
-			BookAggregate bookAggregate = aggregateFactory.loadBook(isbn);
-			bookAggregate.borrow(loanId, userId);
-
-			loanAggregate.confirm();
-			
-		} catch (CannotBorrowWithoutReservation e) {
-			loanAggregate.fail(LoanFailedReason.RESERVATION_MISSING);
-			throw e;
-		} catch (BookNotAvailable e) {
-			loanAggregate.fail(LoanFailedReason.BOOK_NOT_AVAILABLE);
-			throw e;
-		}
+		loanAggregate.requestConfirm();
 
 	}
 	

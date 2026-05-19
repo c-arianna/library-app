@@ -104,19 +104,18 @@ public class LoanSteps {
 	public void addLoanWithoutReserve(String isbn) {
 		String userId = world.get("USER_ID", String.class);
 		String loanId = UUID.randomUUID().toString();
+		String isbnValue = ISBN.of(isbn).getValue();
 		DateRange period = new DateRange(LocalDate.now(), null);
-
-		LoanRequestPayload payload = new LoanRequestPayload(loanId, ISBN.of(isbn).getValue(), userId, period,
-				LoanStatus.PENDING);
-		LoanRequestedEvent event = new LoanRequestedEvent(loanId, payload, Instant.now());
-		eventRepository.appendToStream(event);
-				
-		loanViewRepository.insertRequest(new LoanView(loanId, ISBN.of(isbn).getValue(), userId, period.getStart(), period.getEnd(), LoanStatus.PENDING));
 		
-		LoanPayload reservedPayload = new LoanPayload(loanId, ISBN.of(isbn).getValue(), userId);
+		LoanRequestPayload payload = new LoanRequestPayload(loanId, isbnValue, userId, period, LoanStatus.PENDING);
+		LoanRequestedEvent requestedEvent = new LoanRequestedEvent(loanId, payload, Instant.now());
+		eventRepository.appendToStream(requestedEvent);
+				
+		LoanPayload reservedPayload = new LoanPayload(loanId, isbnValue, userId);
 		LoanReservedEvent reservedEvent = new LoanReservedEvent(loanId, reservedPayload, Instant.now());
 		eventRepository.appendToStream(reservedEvent);
-		dispatcher.dispatch(reservedEvent);
+				
+		loanViewRepository.insertRequest(new LoanView(loanId, isbnValue, userId, period.getStart(), period.getEnd(), LoanStatus.RESERVED));
 		
 		world.put("LOAN_ID", loanId);
 	}

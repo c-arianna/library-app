@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import mentoring.acomi.library.application.LoanFailedReason;
-import mentoring.acomi.library.domain.common.DateRange;
 import mentoring.acomi.library.domain.events.LoanCanceledEvent;
+import mentoring.acomi.library.domain.events.LoanConfirmRequestedEvent;
 import mentoring.acomi.library.domain.events.LoanConfirmedEvent;
 import mentoring.acomi.library.domain.events.LoanEvent;
 import mentoring.acomi.library.domain.events.LoanFailedEvent;
@@ -27,18 +27,17 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 
 	Map<LoanStatus, List<LoanStatus>> allowedTransitions = Map.of(
 			LoanStatus.PENDING, List.of(LoanStatus.RESERVED, LoanStatus.FAILED), 
-			LoanStatus.CANCELED, List.of(),
+			LoanStatus.CANCELED, List.of(), 
 			LoanStatus.RETURNED, List.of(), 
 			LoanStatus.FAILED, List.of(), 
-			LoanStatus.CONFIRMED, List.of(LoanStatus.RETURNED), 
+			LoanStatus.CONFIRMED, List.of(LoanStatus.RETURNED),
 			LoanStatus.RESERVED, List.of(LoanStatus.CONFIRMED, LoanStatus.CANCELED, LoanStatus.FAILED));
 
 	private boolean isCreated = false;
 	private LoanStatus status;
 	private String isbn;
 	private String userId;
-	private DateRange period;
-
+	
 	public LoanAggregate(LoanIdentifier id, Consumer<LoanEvent> dispatcher, List<LoanEvent> events) {
 		super(id, dispatcher);
 		this.replay(events);
@@ -53,6 +52,7 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 		case LoanConfirmedEvent e -> applyLoanConfirmedEvent(e);
 		case LoanCanceledEvent e -> applyLoanCanceledEvent(e);
 		case LoanReturnedEvent e -> applyLoanReturnedEvent(e);
+		case LoanConfirmRequestedEvent e -> {}
 		}
 
 	}
@@ -62,7 +62,6 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 		status = LoanStatus.PENDING;
 		isbn = payload.isbn();
 		userId = payload.userId();
-		period = payload.period();
 		isCreated = true;
 	}
 
@@ -77,7 +76,7 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 	private void applyLoanConfirmedEvent(LoanConfirmedEvent e) {
 		status = LoanStatus.CONFIRMED;
 	}
-	
+
 	private void applyLoanCanceledEvent(LoanCanceledEvent e) {
 		status = LoanStatus.CANCELED;
 	}
@@ -85,7 +84,7 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 	private void applyLoanReturnedEvent(LoanReturnedEvent e) {
 		status = LoanStatus.RETURNED;
 	}
-	
+
 	public void add(Loan loan) {
 
 		if (this.isCreated) {
@@ -149,31 +148,42 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 		ensureCreated();
 
 		if (!LoanStatus.CANCELED.equals(status)) {
-			
+
 			ensureTransitionAllowed(LoanStatus.CANCELED);
-			
-			LoanCanceledEvent event = new LoanCanceledEvent(id.getValue(),
-					new LoanPayload(id.getValue(), isbn, userId), Instant.now());
+
+			LoanCanceledEvent event = new LoanCanceledEvent(id.getValue(), new LoanPayload(id.getValue(), isbn, userId),
+					Instant.now());
 			manageEvent(event);
 		}
 
 	}
-	
+
 	public void returnLoan() {
-		
+
 		ensureCreated();
-		
+
 		if (!LoanStatus.RETURNED.equals(status)) {
-			
+
 			ensureTransitionAllowed(LoanStatus.RETURNED);
-			
-			LoanReturnedEvent event = new LoanReturnedEvent(id.getValue(),
-					new LoanPayload(id.getValue(), isbn, userId), Instant.now());
+
+			LoanReturnedEvent event = new LoanReturnedEvent(id.getValue(), new LoanPayload(id.getValue(), isbn, userId),
+					Instant.now());
 			manageEvent(event);
 		}
-		
+
 	}
-	
+
+	public void requestConfirm() {
+
+		ensureCreated();
+
+		if (LoanStatus.RESERVED.equals(status)) {
+			ensureTransitionAllowed(LoanStatus.CONFIRMED);
+			LoanConfirmRequestedEvent event = new LoanConfirmRequestedEvent(id.getValue(), new LoanPayload(id.getValue(), isbn, userId), Instant.now());
+			manageEvent(event);
+		}
+	}
+
 	public void ensureCreated() {
 		if (!isCreated) {
 			throw new LoanNotExist("Loan not exists");
@@ -190,7 +200,7 @@ public class LoanAggregate extends AggregateRoot<LoanIdentifier, LoanEvent> {
 
 	}
 
-	public boolean isReservableState() {
+	public boolean isConfirmable() {
 		return LoanStatus.RESERVED.equals(status);
 	}
 

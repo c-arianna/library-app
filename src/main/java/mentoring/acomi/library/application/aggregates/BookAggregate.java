@@ -6,24 +6,28 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import mentoring.acomi.library.application.BookBorrowRejectReason;
+import mentoring.acomi.library.application.BookReservationRejectReason;
 import mentoring.acomi.library.domain.books.errors.BookNotRegistered;
 import mentoring.acomi.library.domain.books.errors.CannotRemoveBookCopies;
 import mentoring.acomi.library.domain.books.errors.InvalidIsbn;
 import mentoring.acomi.library.domain.books.errors.InvalidQuantity;
+import mentoring.acomi.library.domain.events.BookBorrowRejectedEvent;
 import mentoring.acomi.library.domain.events.BookBorrowedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
 import mentoring.acomi.library.domain.events.BookEvent;
 import mentoring.acomi.library.domain.events.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.BookReleasedEvent;
+import mentoring.acomi.library.domain.events.BookReservationRejectedEvent;
 import mentoring.acomi.library.domain.events.BookReservedEvent;
 import mentoring.acomi.library.domain.events.BookReturnedEvent;
+import mentoring.acomi.library.domain.events.payload.BookBorrowRejectedPayload;
 import mentoring.acomi.library.domain.events.payload.BookCopiesAddedPayload;
 import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
 import mentoring.acomi.library.domain.events.payload.BookLoanPayload;
 import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
-import mentoring.acomi.library.domain.loans.errors.BookNotAvailable;
-import mentoring.acomi.library.domain.loans.errors.CannotBorrowWithoutReservation;
+import mentoring.acomi.library.domain.events.payload.BookReservationRejectedPayload;
 import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.domain.model.books.ISBN;
 
@@ -52,6 +56,8 @@ public class BookAggregate extends AggregateRoot<ISBN, BookEvent> {
 		case BookBorrowedEvent e -> applyBookBorrowed(e);
 		case BookReleasedEvent e -> applyBookReleased(e);
 		case BookReturnedEvent e -> applyBookReturned(e);
+		case BookReservationRejectedEvent e -> {}
+		case BookBorrowRejectedEvent e  -> {}
 		}
 	}
 
@@ -159,11 +165,18 @@ public class BookAggregate extends AggregateRoot<ISBN, BookEvent> {
 
 	public void reserve(String loanId, String userId) {
 
-		ensureRegistered();
-
-		if (availableCopies() <= 0) {
-			throw new BookNotAvailable(String.format("There are no available copies for ISBN: %s", id));
+		if(!isRegistered || availableCopies() <= 0) {
+			
+			BookReservationRejectReason reason = availableCopies() <= 0 ? BookReservationRejectReason.BOOK_NOT_AVAILABLE : 
+				BookReservationRejectReason.BOOK_NOT_REGISTERED;
+			
+			BookReservationRejectedEvent event = new BookReservationRejectedEvent(id.getValue(), 
+					new BookReservationRejectedPayload(id.getValue(), loanId, userId, reason), Instant.now());
+			manageEvent(event);
+			
+			return;
 		}
+
 
 		if (!reservedLoans.contains(loanId) && !borrowedLoans.contains(loanId)) {
 			BookReservedEvent event = new BookReservedEvent(id.getValue(), new BookLoanPayload(id.getValue(), loanId, userId), Instant.now());
@@ -173,12 +186,22 @@ public class BookAggregate extends AggregateRoot<ISBN, BookEvent> {
 
 	public void borrow(String loanId, String userId) {
 
-		ensureRegistered();
+		if (!isRegistered) {
+			BookBorrowRejectedEvent event = new BookBorrowRejectedEvent(id.getValue(),
+		            new BookBorrowRejectedPayload(id.getValue(), loanId, userId, BookBorrowRejectReason.BOOK_NOT_REGISTERED),
+		            Instant.now());
+			manageEvent(event);
+			return;
+		}
 
 		if (!borrowedLoans.contains(loanId)) {
 
 			if (!reservedLoans.contains(loanId)) {
-				throw new CannotBorrowWithoutReservation("Cannot borrow without reservation");
+				BookBorrowRejectedEvent event = new BookBorrowRejectedEvent(id.getValue(),
+			            new BookBorrowRejectedPayload(id.getValue(), loanId, userId, BookBorrowRejectReason.RESERVATION_MISSING),
+			            Instant.now());
+				manageEvent(event);
+				return;
 			}
 
 			BookBorrowedEvent event = new BookBorrowedEvent(id.getValue(), new BookLoanPayload(id.getValue(), loanId, userId), Instant.now());

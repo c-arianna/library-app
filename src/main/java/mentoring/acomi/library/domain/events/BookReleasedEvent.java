@@ -8,6 +8,6 @@ public record BookReleasedEvent(
 		String aggregateId,
 	    BookLoanPayload payload,
         Instant occurredAt
-        )implements BookEvent {
+        )implements BookStateEvent {
     @Override public DomainEventType type() { return DomainEventType.BookReleased; }
 }

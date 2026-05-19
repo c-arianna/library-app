@@ -8,11 +8,11 @@ import mentoring.acomi.library.application.view.BookView;
 import mentoring.acomi.library.domain.events.BookBorrowedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
 import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
-import mentoring.acomi.library.domain.events.BookEvent;
 import mentoring.acomi.library.domain.events.BookRegisteredEvent;
 import mentoring.acomi.library.domain.events.BookReleasedEvent;
 import mentoring.acomi.library.domain.events.BookReservedEvent;
 import mentoring.acomi.library.domain.events.BookReturnedEvent;
+import mentoring.acomi.library.domain.events.BookStateEvent;
 import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
 
 @Component
@@ -25,7 +25,7 @@ public class BookProjection {
 	}
 
 	@Transactional
-	public void updateView(BookEvent event) {
+	public void updateView(BookStateEvent event) {
 
 		switch (event) {
 			case BookRegisteredEvent e -> repository.addBook(getBook(e.payload()));

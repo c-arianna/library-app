@@ -3,7 +3,7 @@ package mentoring.acomi.library.application.projector.book;
 import org.springframework.stereotype.Component;
 
 import mentoring.acomi.library.application.projection.book.BookProjection;
-import mentoring.acomi.library.domain.events.BookEvent;
+import mentoring.acomi.library.domain.events.BookStateEvent;
 
 @Component
 public class BookProjector {
@@ -14,7 +14,7 @@ public class BookProjector {
 		this.projection = projection;
 	}
 	
-	public void project(BookEvent bookEvent) {
-		projection.updateView(bookEvent);
+	public void project(BookStateEvent bookStateEvent) {
+		projection.updateView(bookStateEvent);
 	}
 }
