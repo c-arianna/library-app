@@ -1,7 +1,6 @@
 package mentoring.acomi.library.steps.books;
 
 import io.cucumber.docstring.DocString;
-import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import mentoring.acomi.library.common.TestConstants;
 import mentoring.acomi.library.steps.Helper;
@@ -11,17 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.jayway.jsonpath.JsonPath;
-
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.server.LocalServerPort;
-
-import mentoring.acomi.library.support.ExpectedValue;
 
 public class BookSteps {
 
@@ -114,42 +107,6 @@ public class BookSteps {
 		if (result.getResponseBody() != null) {
 			world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
 		}
-	}
-
-	/*
-	 * ############################### THEN #####################################
-	 */
-
-	@Then("{string} è una lista vuota")
-	public void checkEmptyList(String field) {
-		var context = JsonPath.parse(world.lastBody);
-		Integer size = context.read(String.format("$.%s.length()", field));
-		Assertions.assertEquals(0, size, String.format("'%s' is not empty", field));
-	}
-
-	@Then("{string} contiene {int} elementi")
-	public void checkList(String field, int size) {
-		var context = JsonPath.parse(world.lastBody);
-		Integer actualSize = context.read(String.format("$.%s.length()", field));
-		Assertions.assertEquals(size, actualSize,
-				String.format("Expected %d elements in '%s', found %d", size, field, actualSize));
-	}
-
-	@Then("{string} ha un elemento con i campi:")
-	public void checkContentList(String field, Map<String, String> expectedRaw) {
-
-		Map<String, ExpectedValue> expected = new LinkedHashMap<>();
-		expectedRaw.forEach((k, v) -> expected.put(k, Helper.normalizeExpected(v)));
-
-		var context = JsonPath.parse(world.lastBody);
-		List<Map<String, Object>> items = context.read(String.format("$.%s", field));
-
-		boolean found = items.stream().anyMatch(
-				item -> expected.entrySet().stream().allMatch(e -> e.getValue().matches(item.get(e.getKey()))));
-
-		Assertions.assertTrue(found,
-				String.format("No items in the '%s' field match the expected values: %s", field, expected));
-
 	}
 
 }

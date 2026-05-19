@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
@@ -206,7 +207,37 @@ public class LoanSteps {
 		}
 
 	}
+	
+	@When("l'utente visualizza l'elenco dei prestiti")
+	public void findLoans() {
 
+		String url = new StringBuilder().append(TestConstants.API_URL).append(port).toString();
+		client = RestTestClient.bindToServer().baseUrl(url).build();
+
+		var result = client.get().uri("/loans").exchange().expectBody().returnResult();
+
+		world.lastStatus = result.getStatus().value();
+		world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
+	}
+	
+	@When("l'utente visualizza l'elenco dei prestiti, con filtro di ricerca")
+	public void findLoansFilter(Map<String, String> rawFilters) {
+		
+		Map<String, String> filters = new LinkedHashMap<>();
+		rawFilters.forEach((k, v) -> filters.put(k, Helper.normalize(Helper.resolve(v, world))));
+		
+		String url = new StringBuilder().append(TestConstants.API_URL).append(port).toString();
+		client = RestTestClient.bindToServer().baseUrl(url).build();
+
+		UriComponentsBuilder uri = UriComponentsBuilder.fromPath("/loans");
+		filters.forEach(uri::queryParam);
+
+		var result = client.get().uri(uri.build().toUri()).exchange().expectBody().returnResult();
+
+		world.lastStatus = result.getStatus().value();
+		world.lastBody = new String(result.getResponseBody(), StandardCharsets.UTF_8);
+	}
+	
 	/*
 	 * ############################### THEN #####################################
 	 */

@@ -181,3 +181,44 @@ Feature: Gestione dei prestiti dei libri tramite l'applicazione
       And la risposta contiene i seguenti campi:
       | code    | "LOAN_NOT_CREATED"           |
       | type    | "AGGREGATE_INVARIANT_FAILED" |
+      
+  Rule: Consultazione delle richieste di prestito
+  
+    Scenario: Consultazione elenco prestiti con nessun prestito presente
+      When l'utente visualizza l'elenco dei prestiti
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "loans"
+      And "loans" è una lista vuota
+      
+    Scenario: Consultazione elenco prestiti con prestiti presenti, senza applicare filtro di ricerca
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      And il prestito del libro "9788804336327" è stato confermato
+      When l'utente visualizza l'elenco dei prestiti
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "loans"
+      And "loans" contiene 1 elementi
+      And "loans" ha un elemento con i campi:
+        | id     | ${LOAN_ID}      |
+        | isbn   | "9788804336327" |
+        | status | "CONFIRMED"     |
+        
+    Scenario: Consultazione elenco prestiti, filtrato per utente non presente
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      When l'utente visualizza l'elenco dei prestiti, con filtro di ricerca
+      | userId | "3" |
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "loans"
+      And "loans" è una lista vuota
+      
+    Scenario: Consultazione elenco prestiti, filtrato per utente e ISBN presenti
+      Given esiste un prestito per il libro ISBN "9788804336327" in attesa di conferma
+      When l'utente visualizza l'elenco dei prestiti, con filtro di ricerca
+      | isbn   | "9788804336327"    |
+      | userId | ${USER_ID} |
+      Then la risposta ha status code 200
+      And la risposta contiene il campo "loans"
+      And "loans" contiene 1 elementi
+      And "loans" ha un elemento con i campi:
+        | id     | ${LOAN_ID}      |
+        | isbn   | "9788804336327" |
+        | userId | ${USER_ID}      |
