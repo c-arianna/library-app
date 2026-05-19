@@ -4,6 +4,7 @@ import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import mentoring.acomi.library.common.TestConstants;
+import mentoring.acomi.library.steps.Helper;
 import mentoring.acomi.library.support.TestContext;
 
 import org.springframework.http.MediaType;
@@ -12,7 +13,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.jayway.jsonpath.JsonPath;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -70,7 +70,7 @@ public class BookSteps {
 	public void findBooksFilter(Map<String, String> rawFilters) {
 
 		Map<String, String> filters = new LinkedHashMap<>();
-		rawFilters.forEach((k, v) -> filters.put(k, normalize(v)));
+		rawFilters.forEach((k, v) -> filters.put(k, Helper.normalize(v)));
 
 		String url = new StringBuilder().append(TestConstants.API_URL).append(port).toString();
 		client = RestTestClient.bindToServer().baseUrl(url).build();
@@ -139,7 +139,7 @@ public class BookSteps {
 	public void checkContentList(String field, Map<String, String> expectedRaw) {
 
 		Map<String, ExpectedValue> expected = new LinkedHashMap<>();
-		expectedRaw.forEach((k, v) -> expected.put(k, normalizeExpected(v)));
+		expectedRaw.forEach((k, v) -> expected.put(k, Helper.normalizeExpected(v)));
 
 		var context = JsonPath.parse(world.lastBody);
 		List<Map<String, Object>> items = context.read(String.format("$.%s", field));
@@ -150,55 +150,6 @@ public class BookSteps {
 		Assertions.assertTrue(found,
 				String.format("No items in the '%s' field match the expected values: %s", field, expected));
 
-	}
-
-	private static String normalize(String value) {
-
-		if (value == null)
-			return "";
-
-		value = value.trim();
-
-		if (value.equals("\"\""))
-			return "";
-
-		if (value.startsWith("\"") && value.endsWith("\"") && value.length() >= 2) {
-			return value.substring(1, value.length() - 1);
-		}
-
-		return value;
-	}
-
-	private static ExpectedValue normalizeExpected(String raw) {
-
-		if (raw == null) {
-			return ExpectedValue.empty();
-		}
-
-		String value = raw.trim();
-
-		if (value.equalsIgnoreCase("EMPTY")) {
-			return ExpectedValue.empty();
-		}
-
-		if (value.equalsIgnoreCase("NULL")) {
-			return ExpectedValue.nullValue();
-		}
-
-		if (value.startsWith("\"") && value.endsWith("\"") && value.length() >= 2) {
-			value = value.substring(1, value.length() - 1);
-			return ExpectedValue.ofString(value);
-		}
-
-		if (value.matches("[-+]?\\d+(\\.\\d+)?")) {
-			return ExpectedValue.ofNumber(new BigDecimal(value));
-		}
-
-		if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
-			return ExpectedValue.ofBoolean(Boolean.parseBoolean(value));
-		}
-
-		return ExpectedValue.ofString(value);
 	}
 
 }

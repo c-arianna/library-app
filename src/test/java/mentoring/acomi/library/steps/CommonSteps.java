@@ -1,7 +1,5 @@
 package mentoring.acomi.library.steps;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -15,37 +13,28 @@ import com.jayway.jsonpath.JsonPath;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
-import mentoring.acomi.library.application.eventhandler.EventDispatcher;
-import mentoring.acomi.library.application.repositories.EventRepository;
-import mentoring.acomi.library.domain.common.DateRange;
-import mentoring.acomi.library.domain.events.BookBorrowedEvent;
-import mentoring.acomi.library.domain.events.BookCopiesAddedEvent;
-import mentoring.acomi.library.domain.events.BookCopiesRemovedEvent;
-import mentoring.acomi.library.domain.events.BookRegisteredEvent;
-import mentoring.acomi.library.domain.events.DomainEvent;
-import mentoring.acomi.library.domain.events.LoanRequestedEvent;
-import mentoring.acomi.library.domain.events.payload.BookCopiesAddedPayload;
-import mentoring.acomi.library.domain.events.payload.BookCopiesRemovedPayload;
-import mentoring.acomi.library.domain.events.payload.BookLoanPayload;
-import mentoring.acomi.library.domain.events.payload.BookRegisteredPayload;
-import mentoring.acomi.library.domain.events.payload.LoanRequestPayload;
+import mentoring.acomi.library.application.aggregates.AggregateFactory;
+import mentoring.acomi.library.application.aggregates.BookAggregate;
+import mentoring.acomi.library.application.aggregates.LoanAggregate;
+import mentoring.acomi.library.application.repositories.BookViewRepository;
+import mentoring.acomi.library.application.view.BookView;
+import mentoring.acomi.library.domain.model.books.Book;
 import mentoring.acomi.library.domain.model.books.ISBN;
-import mentoring.acomi.library.domain.model.loans.LoanStatus;
+import mentoring.acomi.library.domain.model.loans.Loan;
+import mentoring.acomi.library.domain.model.loans.LoanIdentifier;
 import mentoring.acomi.library.support.ExpectedValue;
 import mentoring.acomi.library.support.TestContext;
 
 public class CommonSteps {
-	
+
 	private final TestContext world;
-	private final EventRepository repository;
-	private final EventDispatcher dispatcher;
-    
-	public CommonSteps(TestContext world, EventRepository repository, EventDispatcher dispatcher) {
+	private final BookViewRepository bookViewRepository;
+	private final AggregateFactory aggregateFactory;
+
+	public CommonSteps(TestContext world, BookViewRepository bookViewRepository, AggregateFactory aggregateFactory) {
 		this.world = world;
-		this.repository = repository;
-		this.dispatcher = dispatcher;
+		this.bookViewRepository = bookViewRepository;
+		this.aggregateFactory = aggregateFactory;
 	}
 
 	/*
@@ -54,50 +43,22 @@ public class CommonSteps {
 
 	@Given("l'amministratore aggiunge un libro con isbn {string}, autore {string}, titolo {string} e descrizione")
 	public void addBook(String isbn, String author, String title, DocString description) {
-
-		String bookDescription = description.getContent().trim();
-		isbn = ISBN.of(isbn).getValue();
-		BookRegisteredPayload payload = new BookRegisteredPayload(isbn, author, title, bookDescription);
-		BookRegisteredEvent event = new BookRegisteredEvent(isbn, payload, Instant.now());
-		repository.appendToStream(event);
-		dispatcher.dispatch(event);
+		givenBookRegistered(isbn, author, title, description);
 	}
 
 	@Given("l'amministratore aggiunge {int} copie del libro {string}")
 	public void addCopies(int quantity, String isbn) {
-		BookCopiesAddedPayload payload = new BookCopiesAddedPayload(isbn, quantity);
-		BookCopiesAddedEvent event = new BookCopiesAddedEvent(isbn, payload, Instant.now());
-		repository.appendToStream(event);
-		dispatcher.dispatch(event);
+		givenCopiesAdded(quantity, isbn);
 	}
-	
+
 	@Given("una copia del libro {string} è in stato borrowed")
 	public void borrowBook(String isbn) {
-		
-		String userId = UUID.randomUUID().toString();
-		String loanId = UUID.randomUUID().toString();
-		DateRange period = new DateRange(LocalDate.now(), null);
-
-		LoanRequestPayload payload = new LoanRequestPayload(loanId, ISBN.of(isbn).getValue(), userId, period,
-				LoanStatus.PENDING);
-		LoanRequestedEvent event = new LoanRequestedEvent(loanId, payload, Instant.now());
-		repository.appendToStream(event);
-		dispatcher.dispatch(event);
-		
-		isbn = ISBN.of(isbn).getValue();
-		BookLoanPayload bookPayload = new BookLoanPayload(isbn, loanId, userId);
-		BookBorrowedEvent bookEvent = new BookBorrowedEvent(isbn, bookPayload, Instant.now());
-		repository.appendToStream(bookEvent);
-		dispatcher.dispatch(bookEvent);
+		givenBookBorrowed(isbn);
 	}
-	
+
 	@Given("una copia del libro {string} è stata rimossa")
 	public void removeBookCopy(String isbn) {
-		isbn = ISBN.of(isbn).getValue();
-		BookCopiesRemovedPayload payload = new BookCopiesRemovedPayload(isbn, 1, "Copy Lost");
-		BookCopiesRemovedEvent event = new BookCopiesRemovedEvent(isbn, payload, Instant.now());
-		repository.appendToStream(event);
-		dispatcher.dispatch(event);
+		givenCopyRemoved(isbn);
 	}
 	
 	/*
@@ -115,96 +76,79 @@ public class CommonSteps {
 		Object value = context.read(String.format("$.%s", field));
 		Assertions.assertNotNull(value, String.format("Missing field: %s", field));
 	}
-	
-	@Then("è stato generato l'evento {string} con aggregateId {string} e payload:")
-	public void checkEventPayload(String eventType, String aggregateId, Map<String, String> expectedRaw) {
-
-		aggregateId = resolve(aggregateId);
-		Optional<DomainEvent> event = repository.getEvent(eventType, aggregateId);
-
-		Assertions.assertTrue(event.isPresent(), String.format("Event %s not found for aggregate ID %s", eventType, aggregateId));
-
-		Map<String, ExpectedValue> expectedPayload = new LinkedHashMap<>();
-		expectedRaw.forEach((k, v) -> {
-			String resolved = resolve(v);
-			expectedPayload.put(k, normalizeExpected(resolved));
-		});
-
-		Object payload = event.get().payload();
-		ObjectMapper mapper = new ObjectMapper();
-	
-		Map<String, Object> actualPayload = mapper.convertValue(payload, 
-				mapper.getTypeFactory().constructType(new TypeReference<Map<String, Object>>() {}));
-
-		expectedPayload.forEach((key, expectedValue) -> {
-
-			Object actualValue = actualPayload.get(key);
-
-			Assertions.assertNotNull(actualValue, String.format("Missing field in payload: %s", key));
-			Assertions.assertTrue(expectedValue.matches(actualValue), String.format("Mismatch on field: %s", key));
-
-		});
-
-	}
 
 	@Then("la risposta contiene i seguenti campi:")
 	public void checkResponseContent(Map<String, String> expectedRaw) {
-		
+
 		var context = JsonPath.parse(world.lastBody);
-			
+
 		Map<String, ExpectedValue> expectedContent = new LinkedHashMap<>();
 		expectedRaw.forEach((k, v) -> {
-			String resolved = resolve(v);
-			expectedContent.put(k, normalizeExpected(resolved));
+			String resolved = Helper.resolve(v, world);
+			expectedContent.put(k, Helper.normalizeExpected(resolved));
 		});
-		
+
 		expectedContent.forEach((key, expectedValue) -> {
 			Object actualValue = context.read(String.format("$.%s", key));
 			Assertions.assertNotNull(actualValue, String.format("Missing field in response: %s", key));
-			Assertions.assertTrue(expectedValue.matches(actualValue), String.format("Mismatch on field: %s, actual value: %s", key, actualValue));
+			Assertions.assertTrue(expectedValue.matches(actualValue),
+					String.format("Mismatch on field: %s, actual value: %s", key, actualValue));
 		});
-		
-		
+
+	}
+
+	@Then("il libro {string} ha totalCopies = {int}, borrowedCopies = {int}, availableCopies = {int}, reservedCopies = {int}")
+	public void checkBookView(String isbn, int totalCopies, int borrowedCopies, int availableCopies,
+			int reservedCopies) {
+
+		Optional<BookView> bookView = bookViewRepository.findById(isbn);
+
+		if (bookView.isEmpty()) {
+			throw new AssertionError(String.format("Book not found, ISBN: %s", isbn));
+		}
+
+		Assertions.assertEquals(totalCopies, bookView.get().totalCopies());
+		Assertions.assertEquals(borrowedCopies, bookView.get().borrowedCopies());
+		Assertions.assertEquals(availableCopies, bookView.get().availableCopies());
+		Assertions.assertEquals(reservedCopies, bookView.get().reservedCopies());
+	}
+
+	/*
+	 * ############################### THEN #####################################
+	 */
+	
+	private void givenBookRegistered(String isbn, String author, String title, DocString description) {
+		String isbnValue = isbn(isbn);
+		BookAggregate book = aggregateFactory.loadBook(isbnValue);
+		book.register(Book.create(isbnValue, author, title, description.getContent()));
+	}
+
+	private void givenCopiesAdded(int quantity, String isbn) {
+		String isbnValue = isbn(isbn);
+		BookAggregate book = aggregateFactory.loadBook(isbnValue);
+		book.addCopies(quantity);
 	}
 	
-	private String resolve(String value) {
-		if (value.startsWith("${") && value.endsWith("}")) {
-			String key = value.substring(2, value.length() - 1);
-			return world.get(key, String.class); 
-		}
-		return value;
+	private void givenBookBorrowed(String isbn) {
+		String loanId = UUID.randomUUID().toString();
+		String userId = UUID.randomUUID().toString();
+		String isbnValue = isbn(isbn);
+
+		LoanAggregate loanAggregate = aggregateFactory.loadLoan(loanId);
+		Loan loan = Loan.create(new LoanIdentifier(loanId), isbnValue, userId, LocalDate.now(), null);
+		loanAggregate.add(loan);
+
+		loanAggregate.requestConfirm();
 	}
-
-	private static ExpectedValue normalizeExpected(String raw) {
-
-		if (raw == null) {
-			return ExpectedValue.empty();
-		}
-
-		String value = raw.trim();
-
-		if (value.equalsIgnoreCase("EMPTY")) {
-			return ExpectedValue.empty();
-		}
-
-		if (value.equalsIgnoreCase("NULL")) {
-			return ExpectedValue.nullValue();
-		}
-
-		if (value.startsWith("\"") && value.endsWith("\"") && value.length() >= 2) {
-			value = value.substring(1, value.length() - 1);
-			return ExpectedValue.ofString(value);
-		}
-
-		if (value.matches("[-+]?\\d+(\\.\\d+)?")) {
-			return ExpectedValue.ofNumber(new BigDecimal(value));
-		}
-
-		if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
-			return ExpectedValue.ofBoolean(Boolean.parseBoolean(value));
-		}
-
-		return ExpectedValue.ofString(value);
+	
+	private void givenCopyRemoved(String isbn) {
+		String isbnValue = isbn(isbn);
+		BookAggregate book = aggregateFactory.loadBook(isbnValue);
+		book.removeCopies(1, "");
 	}
-
+	
+	private String isbn(String isbn) {
+		return ISBN.of(isbn).getValue();
+	}
+		
 }
