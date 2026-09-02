@@ -21,7 +21,7 @@ import mentoring.acomi.library.domain.events.LoanStateEvent;
 public class ApplicationEventConfiguration {
 
     public ApplicationEventConfiguration(EventDispatcher eventDispatcher, BookProjector bookProjector,
-			LoanProjector loanProjector, LoanLifecycleSaga saga, EventJpaMapper eventJpaMapper) {
+			LoanProjector loanProjector, LoanLifecycleReactor saga, EventJpaMapper eventJpaMapper) {
 		
 		eventDispatcher.subscribe(DomainEventType.BookRegistered, BookStateEvent.class, bookProjector::project);
 		eventDispatcher.subscribe(DomainEventType.BookCopiesAdded, BookStateEvent.class, bookProjector::project);

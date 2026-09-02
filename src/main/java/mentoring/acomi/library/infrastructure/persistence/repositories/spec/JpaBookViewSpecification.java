@@ -19,7 +19,7 @@ public class JpaBookViewSpecification {
 			List<Predicate> predicates = new ArrayList<>();
 
 			if (!ObjectUtils.isEmpty(filter.isbn())) {
-				predicates.add(cb.equal(root.get("author"), filter.isbn()));
+				predicates.add(cb.equal(root.get("isbn"), filter.isbn()));
 			}
 
 			if (!ObjectUtils.isEmpty(filter.author())) {

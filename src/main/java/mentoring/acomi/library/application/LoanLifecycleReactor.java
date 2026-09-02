@@ -18,12 +18,12 @@ import mentoring.acomi.library.domain.events.LoanRequestedEvent;
 import mentoring.acomi.library.domain.events.LoanReturnedEvent;
 
 @Component
-public class LoanLifecycleSaga {
+public class LoanLifecycleReactor {
 
 	private final AggregateFactory aggregateFactory;
 	private final Logger logger;
 
-	public LoanLifecycleSaga(AggregateFactory aggregateFactory,
+	public LoanLifecycleReactor(AggregateFactory aggregateFactory,
 			@Value("${spring.application.name}") String applicationName) {
 		this.aggregateFactory = aggregateFactory;
 		this.logger = LogManager.getLogger(applicationName);
