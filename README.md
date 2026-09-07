@@ -150,16 +150,16 @@ Read models are maintained through projections and projectors in order to suppor
 
 The project includes:
 
-- Behaviour Driven Development (BDD) tests using Cucumber and Gherkin
+- Behavior-Driven Development (BDD) tests using Cucumber and Gherkin
 - Spring Boot integration tests
 - MySQL Testcontainers environments
 - End-to-end business process validation
 
-Business rules, aggregate behaviour, domain events and event-driven workflows are validated through executable specifications.
+Business rules, aggregate behavior, domain events and event-driven workflows are validated through executable specifications.
 
 ## Running the Tests
 
-The project includes a Behaviour Driven Development (BDD) test suite written in Gherkin.
+The project includes a Behavior-Driven Development (BDD) test suite written in Gherkin.
 
 The business scenarios validate the complete application stack, including aggregates, event persistence, projections and process coordination.
 
@@ -184,7 +184,7 @@ No manually configured database is required for test execution.
 
 ## Lessons Learned
 
-This implementation confirmed that Event Sourcing, CQRS-style projections and aggregate-based domain modelling can provide a clear separation between business behaviour and persistence concerns.
+This implementation confirmed that Event Sourcing, CQRS-style projections and aggregate-based domain modelling can provide a clear separation between business behavior and persistence concerns.
 
 At the same time, several new challenges became apparent:
 
